@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PagePause - Your reading companion for healthier eyes. Take regular breaks while reading.">
+    <meta name="theme-color" content="#1a4d3e">
+    <title>PagePause - Eye Wellness Timer for Readers</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2">
+                    <!-- Open Book -->
+                    <path d="M4 12 L4 36 C4 36 8 32 14 32 C20 32 24 36 24 36 C24 36 28 32 34 32 C40 32 44 36 44 36 L44 12 C44 12 40 8 34 8 C28 8 24 12 24 12 C24 12 20 8 14 8 C8 8 4 12 4 12 Z" stroke-linejoin="round"/>
+                    <!-- Book spine/center -->
+                    <line x1="24" y1="12" x2="24" y2="36" stroke-width="1.5"/>
+                    <!-- Book pages (left side) -->
+                    <line x1="8" y1="18" x2="20" y2="18" stroke-width="1" opacity="0.6"/>
+                    <line x1="8" y1="22" x2="20" y2="22" stroke-width="1" opacity="0.6"/>
+                    <line x1="8" y1="26" x2="20" y2="26" stroke-width="1" opacity="0.6"/>
+                    <!-- Book pages (right side) -->
+                    <line x1="28" y1="18" x2="40" y2="18" stroke-width="1" opacity="0.6"/>
+                    <line x1="28" y1="22" x2="40" y2="22" stroke-width="1" opacity="0.6"/>
+                    <line x1="28" y1="26" x2="40" y2="26" stroke-width="1" opacity="0.6"/>
+                    <!-- Clock/Reminder badge -->
+                    <circle cx="38" cy="10" r="7" fill="var(--background)" stroke-width="2"/>
+                    <!-- Clock hands -->
+                    <line x1="38" y1="10" x2="38" y2="6" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="38" y1="10" x2="41" y2="10" stroke-width="2" stroke-linecap="round"/>
+                    <!-- Clock center dot -->
+                    <circle cx="38" cy="10" r="1" fill="currentColor"/>
+                    <!-- Eye symbol (small, subtle) -->
+                    <ellipse cx="14" cy="30" rx="2" ry="1.5" fill="var(--secondary-color)" opacity="0.7"/>
+                    <ellipse cx="34" cy="30" rx="2" ry="1.5" fill="var(--secondary-color)" opacity="0.7"/>
+                </svg>
+                <h1>PagePause</h1>
+            </div>
+            <p class="tagline">Your Reading Companion for Healthier Eyes</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Tab Navigation -->
+            <nav class="tabs">
+                <button class="tab-btn active" data-tab="timer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Timer
+                </button>
+                <button class="tab-btn" data-tab="tasks">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                    </svg>
+                    Tasks
+                </button>
+                <button class="tab-btn" data-tab="mindfulness">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    Mindfulness
+                </button>
+            </nav>
+
+            <!-- Timer Tab -->
+            <div class="tab-content active" id="timer">
+                <div class="timer-section">
+                    <h2 class="section-title">Ready, set, focus!</h2>
+                    <p class="section-description">
+                        Dividing your focus time into short bursts of productivity followed by short breaks can help you stay energized.
+                    </p>
+
+                    <div class="timer-card">
+                        <div class="timer-question">How long would you like to use the focus timer for?</div>
+                        
+                        <div class="timer-display">
+                            <button class="time-adjust" id="increaseTime" aria-label="Increase time">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <polyline points="18 15 12 9 6 15"/>
+                                </svg>
+                            </button>
+                            <div class="time-value">
+                                <input type="number" id="timeValue" value="25" min="5" max="240" step="5" aria-label="Focus time in minutes">
+                                <span class="time-unit">mins</span>
+                            </div>
+                            <button class="time-adjust" id="decreaseTime" aria-label="Decrease time">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="breaks-info" id="breaksInfo">You'll have <strong>0</strong> breaks.</div>
+
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="skipBreaks">
+                            <span class="checkbox-label">Skip breaks</span>
+                        </label>
+
+                        <button class="start-button" id="startButton">
+                            <svg class="button-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            Start focus timer
+                        </button>
+                    </div>
+
+                    <!-- Timer Settings -->
+                    <details class="settings-panel">
+                        <summary class="settings-header">
+                            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                            Timer Settings
+                        </summary>
+                        
+                        <div class="settings-content">
+                            <div class="setting-row">
+                                <label class="setting-label">Sounds</label>
+                            </div>
+                            
+                            <div class="setting-row">
+                                <label class="setting-label">Start focus tone</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="startFocusTone" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="setting-row">
+                                <label class="setting-label">Start break tone</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="startBreakTone" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="setting-row">
+                                <label class="setting-label">Break period</label>
+                                <select class="setting-select" id="breakPeriod">
+                                    <option value="5">5 minutes</option>
+                                    <option value="10">10 minutes</option>
+                                    <option value="15" selected>15 minutes</option>
+                                    <option value="20">20 minutes</option>
+                                </select>
+                            </div>
+
+                            <div class="setting-row">
+                                <label class="setting-label">Focus period</label>
+                                <select class="setting-select" id="focusPeriod">
+                                    <option value="15">15 minutes</option>
+                                    <option value="20">20 minutes</option>
+                                    <option value="25">25 minutes</option>
+                                    <option value="30" selected>30 minutes</option>
+                                    <option value="45">45 minutes</option>
+                                    <option value="60">60 minutes</option>
+                                </select>
+                            </div>
+
+                            <div class="setting-row">
+                                <label class="setting-label">Eye exercises reminder</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="eyeExercises" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Active Timer Display -->
+                <div class="active-timer hidden" id="activeTimer">
+                    <div class="timer-type" id="timerType">Focus Session</div>
+                    <div class="countdown-circle">
+                        <svg class="progress-ring" width="200" height="200">
+                            <circle class="progress-ring-circle-bg" cx="100" cy="100" r="90"/>
+                            <circle class="progress-ring-circle" cx="100" cy="100" r="90" id="progressCircle"/>
+                        </svg>
+                        <div class="countdown-text" id="countdownText">25:00</div>
+                    </div>
+                    <div class="session-info" id="sessionInfo">Session 1 of 4</div>
+                    <div class="timer-controls">
+                        <button class="control-button" id="pauseButton">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="4" width="4" height="16"/>
+                                <rect x="14" y="4" width="4" height="16"/>
+                            </svg>
+                            Pause
+                        </button>
+                        <button class="control-button secondary" id="stopButton">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="6" width="12" height="12"/>
+                            </svg>
+                            Stop
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Tab -->
+            <div class="tab-content" id="tasks">
+                <div class="tasks-section">
+                    <h2 class="section-title">Reading Tasks</h2>
+                    <p class="section-description">Track what you're reading during focus sessions</p>
+                    
+                    <div class="task-input-container">
+                        <input type="text" id="taskInput" class="task-input" placeholder="What are you reading today?">
+                        <button class="add-task-button" id="addTaskButton">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <ul class="task-list" id="taskList">
+                        <!-- Tasks will be added here dynamically -->
+                    </ul>
+
+                    <!-- Quick Reminders Section -->
+                    <div class="reminders-section">
+                        <h3 class="subsection-title">⏰ Quick Reminders</h3>
+                        <p class="subsection-description">Set custom reminders while reading</p>
+                        
+                        <div class="reminder-input-container">
+                            <input type="text" id="reminderInput" class="reminder-input" placeholder="What do you want to be reminded of?">
+                            <div class="reminder-time-controls">
+                                <input type="number" id="reminderMinutes" class="reminder-time-input" min="1" max="999" value="5" placeholder="5">
+                                <span class="reminder-time-label">minutes</span>
+                            </div>
+                            <button class="set-reminder-button" id="setReminderButton">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                                Set Reminder
+                            </button>
+                        </div>
+
+                        <!-- Quick preset buttons -->
+                        <div class="reminder-presets">
+                            <button class="preset-button" data-minutes="5">5 min</button>
+                            <button class="preset-button" data-minutes="7">7 min</button>
+                            <button class="preset-button" data-minutes="10">10 min</button>
+                            <button class="preset-button" data-minutes="15">15 min</button>
+                            <button class="preset-button" data-minutes="30">30 min</button>
+                        </div>
+
+                        <!-- Active reminders list -->
+                        <ul class="reminders-list" id="remindersList">
+                            <!-- Active reminders will appear here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mindfulness Tab -->
+            <div class="tab-content" id="mindfulness">
+                <div class="mindfulness-section">
+                    <h2 class="section-title">Eye Wellness Break</h2>
+                    <p class="section-description">Simple exercises to rest and rejuvenate your eyes</p>
+                    
+                    <div class="exercise-cards">
+                        <div class="exercise-card">
+                            <div class="exercise-icon">👁️</div>
+                            <h3>20-20-20 Rule</h3>
+                            <p>Every 20 minutes, look at something 20 feet away for 20 seconds.</p>
+                        </div>
+
+                        <div class="exercise-card">
+                            <div class="exercise-icon">👀</div>
+                            <h3>Blink Exercise</h3>
+                            <p>Blink slowly 10 times. Close your eyes and take 3 deep breaths.</p>
+                        </div>
+
+                        <div class="exercise-card">
+                            <div class="exercise-icon">🔄</div>
+                            <h3>Eye Rolls</h3>
+                            <p>Slowly roll your eyes in a circle, 5 times clockwise and 5 times counter-clockwise.</p>
+                        </div>
+
+                        <div class="exercise-card">
+                            <div class="exercise-icon">🫴</div>
+                            <h3>Palm Press</h3>
+                            <p>Rub your palms together and gently place them over your closed eyes for 30 seconds.</p>
+                        </div>
+
+                        <div class="exercise-card">
+                            <div class="exercise-icon">➡️⬅️</div>
+                            <h3>Near & Far Focus</h3>
+                            <p>Hold your thumb 10 inches away. Focus on it, then focus on something far. Repeat 10 times.</p>
+                        </div>
+
+                        <div class="exercise-card">
+                            <div class="exercise-icon">✏️</div>
+                            <h3>Figure Eight</h3>
+                            <p>Imagine a large figure 8 on the wall. Trace it with your eyes slowly for 30 seconds.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Take care of your eyes, one page at a time 📖</p>
+            <p class="visit-counter">
+                <span class="visit-label">Visit Count:</span>
+                <span class="visit-number" id="visitCount">0</span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Reminder Popup Modal -->
+    <div id="reminderModal" class="reminder-modal" style="display: none;">
+        <div class="reminder-modal-content">
+            <button class="reminder-modal-close" id="closeReminderModal" aria-label="Close reminder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="reminder-modal-icon">⏰</div>
+            <h2 class="reminder-modal-title">Reminder!</h2>
+            <p class="reminder-modal-text" id="reminderModalText"></p>
+            <div class="reminder-modal-buttons">
+                <button class="reminder-modal-btn reminder-snooze-btn" id="snoozeReminder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Snooze 5 min
+                </button>
+                <button class="reminder-modal-btn reminder-dismiss-btn" id="dismissReminder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stop Timer Confirmation Modal -->
+    <div id="stopTimerModal" class="confirmation-modal">
+        <div class="confirmation-modal-content">
+            <div class="confirmation-modal-icon">⏹️</div>
+            <h2 class="confirmation-modal-title">Stop Timer?</h2>
+            <p class="confirmation-modal-text">Are you sure you want to stop the timer? Your current progress will be lost.</p>
+            <div class="confirmation-modal-buttons">
+                <button class="confirmation-modal-btn confirmation-cancel-btn" id="cancelStopTimer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Cancel
+                </button>
+                <button class="confirmation-modal-btn confirmation-stop-btn" id="confirmStopTimer">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                    </svg>
+                    Stop Timer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

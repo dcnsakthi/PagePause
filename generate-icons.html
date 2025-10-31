@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate PagePause Icons</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            background: #1a2e28;
+            color: #e8f5f0;
+        }
+        canvas {
+            border: 1px solid #2d4a42;
+            margin: 10px;
+            background: white;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .icon-set {
+            text-align: center;
+        }
+        button {
+            margin: 20px 10px;
+            padding: 12px 24px;
+            background: #2d6b57;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #4a9d7f;
+        }
+        h2 {
+            color: #4a9d7f;
+        }
+    </style>
+</head>
+<body>
+    <h1>PagePause Icon Generator</h1>
+    <p>Click the buttons below to generate and download icons for the PWA.</p>
+    
+    <button onclick="generateAllIcons()">Generate All Icons</button>
+    
+    <div class="container" id="iconContainer"></div>
+    
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        function drawIcon(canvas, size, isMaskable = false) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background
+            if (isMaskable) {
+                // Add safe zone for maskable icons
+                const gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient.addColorStop(0, '#1a4d3e');
+                gradient.addColorStop(1, '#2d6b57');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, size, size);
+            } else {
+                // Transparent background for regular icons
+                ctx.clearRect(0, 0, size, size);
+            }
+            
+            // Calculate dimensions
+            const center = size / 2;
+            const iconSize = isMaskable ? size * 0.5 : size * 0.7;
+            const padding = (size - iconSize) / 2;
+            
+            // Draw open book with clock/reminder badge
+            ctx.save();
+            ctx.translate(center, center);
+            
+            // Book dimensions
+            const bookWidth = iconSize * 0.8;
+            const bookHeight = iconSize * 0.6;
+            
+            // Draw open book shape
+            ctx.strokeStyle = '#4a9d7f';
+            ctx.lineWidth = size * 0.02;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // Left page
+            ctx.beginPath();
+            ctx.moveTo(-bookWidth/2, -bookHeight/2);
+            ctx.quadraticCurveTo(-bookWidth/4, -bookHeight/2 - size * 0.02, 0, -bookHeight/2);
+            ctx.lineTo(0, bookHeight/2);
+            ctx.quadraticCurveTo(-bookWidth/4, bookHeight/2 + size * 0.02, -bookWidth/2, bookHeight/2);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(74, 157, 127, 0.2)';
+            ctx.fill();
+            ctx.stroke();
+            
+            // Right page
+            ctx.beginPath();
+            ctx.moveTo(0, -bookHeight/2);
+            ctx.quadraticCurveTo(bookWidth/4, -bookHeight/2 - size * 0.02, bookWidth/2, -bookHeight/2);
+            ctx.lineTo(bookWidth/2, bookHeight/2);
+            ctx.quadraticCurveTo(bookWidth/4, bookHeight/2 + size * 0.02, 0, bookHeight/2);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(74, 157, 127, 0.3)';
+            ctx.fill();
+            ctx.stroke();
+            
+            // Center spine
+            ctx.beginPath();
+            ctx.moveTo(0, -bookHeight/2);
+            ctx.lineTo(0, bookHeight/2);
+            ctx.strokeStyle = '#2d6b57';
+            ctx.lineWidth = size * 0.015;
+            ctx.stroke();
+            
+            // Book page lines (left)
+            ctx.strokeStyle = 'rgba(74, 157, 127, 0.5)';
+            ctx.lineWidth = size * 0.008;
+            for (let i = 1; i <= 4; i++) {
+                const y = -bookHeight/2 + (i * bookHeight/5);
+                ctx.beginPath();
+                ctx.moveTo(-bookWidth/2 + size * 0.04, y);
+                ctx.lineTo(-size * 0.01, y);
+                ctx.stroke();
+            }
+            
+            // Book page lines (right)
+            for (let i = 1; i <= 4; i++) {
+                const y = -bookHeight/2 + (i * bookHeight/5);
+                ctx.beginPath();
+                ctx.moveTo(size * 0.01, y);
+                ctx.lineTo(bookWidth/2 - size * 0.04, y);
+                ctx.stroke();
+            }
+            
+            // Clock/Reminder badge (top right)
+            const clockRadius = iconSize * 0.22;
+            const clockX = bookWidth * 0.35;
+            const clockY = -bookHeight * 0.35;
+            
+            // Clock circle with gradient
+            const clockGradient = ctx.createRadialGradient(clockX, clockY, 0, clockX, clockY, clockRadius);
+            clockGradient.addColorStop(0, '#ff9800');
+            clockGradient.addColorStop(1, '#f57c00');
+            ctx.fillStyle = clockGradient;
+            ctx.beginPath();
+            ctx.arc(clockX, clockY, clockRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Clock border
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = size * 0.012;
+            ctx.stroke();
+            
+            // Clock hands
+            ctx.strokeStyle = '#fff';
+            ctx.lineCap = 'round';
+            
+            // Minute hand (12 o'clock)
+            ctx.lineWidth = size * 0.01;
+            ctx.beginPath();
+            ctx.moveTo(clockX, clockY);
+            ctx.lineTo(clockX, clockY - clockRadius * 0.6);
+            ctx.stroke();
+            
+            // Hour hand (3 o'clock)
+            ctx.lineWidth = size * 0.014;
+            ctx.beginPath();
+            ctx.moveTo(clockX, clockY);
+            ctx.lineTo(clockX + clockRadius * 0.45, clockY);
+            ctx.stroke();
+            
+            // Center dot
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(clockX, clockY, size * 0.008, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Small notification bell icon on clock
+            const bellSize = clockRadius * 0.3;
+            const bellX = clockX - clockRadius * 0.5;
+            const bellY = clockY + clockRadius * 0.5;
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = size * 0.008;
+            ctx.beginPath();
+            // Bell shape
+            ctx.moveTo(bellX - bellSize/3, bellY);
+            ctx.quadraticCurveTo(bellX - bellSize/3, bellY - bellSize/2, bellX, bellY - bellSize/2);
+            ctx.quadraticCurveTo(bellX + bellSize/3, bellY - bellSize/2, bellX + bellSize/3, bellY);
+            ctx.stroke();
+            // Bell bottom
+            ctx.beginPath();
+            ctx.moveTo(bellX - bellSize/3, bellY);
+            ctx.lineTo(bellX + bellSize/3, bellY);
+            ctx.stroke();
+            
+            // Eye wellness dots (subtle)
+            const eyeY = bookHeight * 0.28;
+            ctx.fillStyle = 'rgba(74, 157, 127, 0.6)';
+            ctx.beginPath();
+            ctx.ellipse(-bookWidth * 0.25, eyeY, size * 0.02, size * 0.015, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(bookWidth * 0.18, eyeY, size * 0.02, size * 0.015, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        function generateIcon(size, isMaskable = false) {
+            const container = document.getElementById('iconContainer');
+            const iconSet = document.createElement('div');
+            iconSet.className = 'icon-set';
+            
+            const canvas = document.createElement('canvas');
+            const label = document.createElement('div');
+            label.textContent = `${size}x${size}${isMaskable ? ' (maskable)' : ''}`;
+            
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = 'Download';
+            downloadBtn.onclick = () => {
+                const filename = isMaskable ? `icon-maskable-${size}.png` : `icon-${size}.png`;
+                downloadCanvas(canvas, filename);
+            };
+            
+            drawIcon(canvas, size, isMaskable);
+            
+            iconSet.appendChild(label);
+            iconSet.appendChild(canvas);
+            iconSet.appendChild(downloadBtn);
+            container.appendChild(iconSet);
+        }
+        
+        function generateAllIcons() {
+            document.getElementById('iconContainer').innerHTML = '';
+            
+            // Generate regular icons
+            sizes.forEach(size => generateIcon(size, false));
+            
+            // Generate maskable icons for Android
+            generateIcon(192, true);
+            generateIcon(512, true);
+        }
+        
+        // Auto-generate on load
+        generateAllIcons();
+    </script>
+</body>
+</html>
