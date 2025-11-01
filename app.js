@@ -171,6 +171,7 @@ function init() {
     renderTasks();
     renderReminders();
     updateVisitCount();
+    listenForCounterUpdates(); // Enable cross-tab counter sync
     
     // Request notification permission
     requestNotificationPermission();
@@ -1165,86 +1166,179 @@ document.addEventListener('visibilitychange', async () => {
     }
 });
 
-// Visit Counter - tracks total visits across all sessions
+// Local Page Hit Counter - persists in browser's localStorage (file-based)
+// This simulates a local file by using the browser's persistent storage
 function updateVisitCount() {
-    const VISIT_COUNT_KEY = 'pagepause-visit-count';
-    const LAST_VISIT_KEY = 'pagepause-last-visit';
-    const SESSION_KEY = 'pagepause-session-id';
+    const visitCountElement = document.getElementById('visitCount');
+    const HIT_COUNT_KEY = 'pagepause-page-hit-count';
+    const LAST_HIT_KEY = 'pagepause-last-hit-timestamp';
     
-    // Generate a unique session ID for this page load
-    const currentSessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    if (!visitCountElement) return;
     
-    // Check if this is a new session (not a page refresh within same session)
-    const lastSessionId = sessionStorage.getItem(SESSION_KEY);
+    // Get current count from localStorage (this persists like a local file)
+    let hitCount = parseInt(localStorage.getItem(HIT_COUNT_KEY) || '0', 10);
     
-    if (!lastSessionId) {
-        // New session - increment visit count
-        let visitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0', 10);
-        visitCount++;
-        localStorage.setItem(VISIT_COUNT_KEY, visitCount.toString());
-        localStorage.setItem(LAST_VISIT_KEY, new Date().toISOString());
-        
-        // Store session ID to prevent double counting on page refreshes
-        sessionStorage.setItem(SESSION_KEY, currentSessionId);
-        
-        // Update display
-        const visitCountElement = document.getElementById('visitCount');
-        if (visitCountElement) {
-            visitCountElement.textContent = visitCount.toLocaleString();
-        }
-        
-        console.log(`PagePause: Visit #${visitCount} recorded at ${new Date().toLocaleString()}`);
-    } else {
-        // Same session - just display existing count
-        const visitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0', 10);
-        const visitCountElement = document.getElementById('visitCount');
-        if (visitCountElement) {
-            visitCountElement.textContent = visitCount.toLocaleString();
-        }
+    // Increment the counter for every page load
+    hitCount++;
+    
+    // Save to localStorage (persistent storage, like a local file)
+    localStorage.setItem(HIT_COUNT_KEY, hitCount.toString());
+    localStorage.setItem(LAST_HIT_KEY, new Date().toISOString());
+    
+    // Update display
+    visitCountElement.textContent = hitCount.toLocaleString();
+    
+    // Log for debugging
+    console.log(`PagePause: Page hit #${hitCount} at ${new Date().toLocaleString()}`);
+    
+    // Sync counter across all open tabs/windows
+    broadcastCounterUpdate(hitCount);
+}
+
+// Broadcast counter updates to other tabs/windows
+function broadcastCounterUpdate(count) {
+    // Use BroadcastChannel API for cross-tab communication
+    if ('BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('pagepause-counter');
+        channel.postMessage({ type: 'counter-update', count: count });
+        channel.close();
     }
 }
 
-// Utility functions for managing visit count (accessible from console)
+// Listen for counter updates from other tabs
+function listenForCounterUpdates() {
+    if ('BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('pagepause-counter');
+        channel.onmessage = (event) => {
+            if (event.data.type === 'counter-update') {
+                const visitCountElement = document.getElementById('visitCount');
+                if (visitCountElement) {
+                    visitCountElement.textContent = event.data.count.toLocaleString();
+                }
+            }
+        };
+    }
+    
+    // Also listen to localStorage changes (fallback for older browsers)
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'pagepause-page-hit-count' && event.newValue) {
+            const visitCountElement = document.getElementById('visitCount');
+            if (visitCountElement) {
+                const count = parseInt(event.newValue, 10);
+                visitCountElement.textContent = count.toLocaleString();
+            }
+        }
+    });
+}
+
+// Export counter data (can be saved to a file manually)
+function exportCounterData() {
+    const hitCount = parseInt(localStorage.getItem('pagepause-page-hit-count') || '0', 10);
+    const lastHit = localStorage.getItem('pagepause-last-hit-timestamp');
+    
+    const data = {
+        hitCount: hitCount,
+        lastHit: lastHit,
+        exportedAt: new Date().toISOString()
+    };
+    
+    // Create downloadable file
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pagepause-counter-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    console.log('Counter data exported:', data);
+    return data;
+}
+
+// Import counter data from a file
+function importCounterData(jsonData) {
+    try {
+        const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+        
+        if (data.hitCount !== undefined) {
+            localStorage.setItem('pagepause-page-hit-count', data.hitCount.toString());
+            
+            if (data.lastHit) {
+                localStorage.setItem('pagepause-last-hit-timestamp', data.lastHit);
+            }
+            
+            const visitCountElement = document.getElementById('visitCount');
+            if (visitCountElement) {
+                visitCountElement.textContent = data.hitCount.toLocaleString();
+            }
+            
+            console.log('Counter data imported successfully:', data);
+            return true;
+        }
+    } catch (error) {
+        console.error('Failed to import counter data:', error);
+        return false;
+    }
+}
+
+// Utility functions for managing page hit count (accessible from console)
 window.PagePause = {
-    getVisitCount: function() {
-        const count = parseInt(localStorage.getItem('pagepause-visit-count') || '0', 10);
-        console.log(`Total visits: ${count}`);
+    getHitCount: function() {
+        const count = parseInt(localStorage.getItem('pagepause-page-hit-count') || '0', 10);
+        console.log(`Total page hits: ${count.toLocaleString()}`);
         return count;
     },
     
-    resetVisitCount: function() {
-        localStorage.setItem('pagepause-visit-count', '0');
-        const visitCountElement = document.getElementById('visitCount');
-        if (visitCountElement) {
-            visitCountElement.textContent = '0';
+    resetHitCount: function() {
+        if (confirm('Are you sure you want to reset the page hit counter to 0?')) {
+            localStorage.setItem('pagepause-page-hit-count', '0');
+            const visitCountElement = document.getElementById('visitCount');
+            if (visitCountElement) {
+                visitCountElement.textContent = '0';
+            }
+            console.log('Page hit counter has been reset to 0');
+            broadcastCounterUpdate(0);
+            return 0;
         }
-        console.log('Visit count has been reset to 0');
-        return 0;
     },
     
-    setVisitCount: function(count) {
+    setHitCount: function(count) {
         if (typeof count !== 'number' || count < 0) {
             console.error('Please provide a valid positive number');
             return;
         }
-        localStorage.setItem('pagepause-visit-count', count.toString());
+        localStorage.setItem('pagepause-page-hit-count', count.toString());
         const visitCountElement = document.getElementById('visitCount');
         if (visitCountElement) {
             visitCountElement.textContent = count.toLocaleString();
         }
-        console.log(`Visit count set to ${count}`);
+        console.log(`Page hit count set to ${count.toLocaleString()}`);
+        broadcastCounterUpdate(count);
         return count;
     },
     
-    getLastVisit: function() {
-        const lastVisit = localStorage.getItem('pagepause-last-visit');
-        if (lastVisit) {
-            const date = new Date(lastVisit);
-            console.log(`Last visit: ${date.toLocaleString()}`);
+    getLastHit: function() {
+        const lastHit = localStorage.getItem('pagepause-last-hit-timestamp');
+        if (lastHit) {
+            const date = new Date(lastHit);
+            console.log(`Last page hit: ${date.toLocaleString()}`);
             return date;
         } else {
-            console.log('No previous visit recorded');
+            console.log('No page hits recorded yet');
             return null;
+        }
+    },
+    
+    exportCounter: function() {
+        return exportCounterData();
+    },
+    
+    importCounter: function(jsonData) {
+        console.log('To import counter data:');
+        console.log('1. Prepare JSON data like: {"hitCount": 100, "lastHit": "2025-11-01T00:00:00.000Z"}');
+        console.log('2. Call: PagePause.importCounter(yourJsonData)');
+        if (jsonData) {
+            return importCounterData(jsonData);
         }
     },
     
@@ -1252,14 +1346,16 @@ window.PagePause = {
         console.log(`
 PagePause Utility Functions:
 ----------------------------
-• PagePause.getVisitCount()    - Get current visit count
-• PagePause.resetVisitCount()  - Reset visit count to 0
-• PagePause.setVisitCount(n)   - Set visit count to n
-• PagePause.getLastVisit()     - Get timestamp of last visit
-• PagePause.help()             - Show this help message
+• PagePause.getHitCount()        - Get current page hit count
+• PagePause.resetHitCount()      - Reset counter to 0
+• PagePause.setHitCount(n)       - Set counter to n
+• PagePause.getLastHit()         - Get timestamp of last hit
+• PagePause.exportCounter()      - Export counter data to JSON file
+• PagePause.importCounter(data)  - Import counter data from JSON
+• PagePause.help()               - Show this help message
 
-Note: Visit count is stored in localStorage and persists across browser sessions.
-Each new browser session/tab counts as one visit. Page refreshes don't increment the count.
+Note: Counter is stored in localStorage (like a local file) and persists across sessions.
+Counter syncs across all open tabs/windows automatically.
         `);
     }
 };
