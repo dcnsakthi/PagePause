@@ -40,6 +40,7 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .container {
@@ -146,6 +147,8 @@ body {
 .tab-content {
     display: none;
     animation: fadeIn 0.3s ease-in;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .tab-content.active {
@@ -166,6 +169,8 @@ body {
 /* Timer Section */
 .timer-section {
     width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .section-title {
@@ -613,12 +618,15 @@ body {
 /* Tasks Section */
 .tasks-section {
     width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .task-input-container {
     display: flex;
     gap: 12px;
     margin-bottom: 24px;
+    max-width: 100%;
 }
 
 .task-input {
@@ -681,6 +689,8 @@ body {
     gap: 16px;
     border: 1px solid var(--border);
     transition: var(--transition);
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .task-item:hover {
@@ -705,6 +715,9 @@ body {
     flex: 1;
     color: var(--text-primary);
     font-size: 16px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
 }
 
 .task-item.completed .task-text {
@@ -737,6 +750,8 @@ body {
 /* Mindfulness Section */
 .mindfulness-section {
     width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .exercise-cards {
@@ -744,6 +759,7 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     margin-top: 30px;
+    max-width: 100%;
 }
 
 .exercise-card {
@@ -753,6 +769,9 @@ body {
     border: 1px solid var(--border);
     transition: var(--transition);
     text-align: center;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .exercise-card:hover {
@@ -1473,6 +1492,21 @@ body {
     .control-button {
         font-size: 14px;
         padding: 12px 20px;
+    }
+    
+    /* Fix grid overflow on small screens */
+    .exercise-cards {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .task-input-container {
+        gap: 8px;
+    }
+    
+    .task-input {
+        font-size: 14px;
+        padding: 14px 16px;
     }
     
     .reminder-modal-content {
