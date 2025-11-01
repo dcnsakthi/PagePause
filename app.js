@@ -493,20 +493,23 @@ function setupEventListeners() {
 
 // Switch tabs
 function switchTab(tabName) {
-    elements.tabBtns.forEach(btn => {
-        if (btn.dataset.tab === tabName) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-    
-    elements.tabContents.forEach(content => {
-        if (content.id === tabName) {
-            content.classList.add('active');
-        } else {
-            content.classList.remove('active');
-        }
+    // Use requestAnimationFrame for smoother transition
+    requestAnimationFrame(() => {
+        elements.tabBtns.forEach(btn => {
+            if (btn.dataset.tab === tabName) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        elements.tabContents.forEach(content => {
+            if (content.id === tabName) {
+                content.classList.add('active');
+            } else {
+                content.classList.remove('active');
+            }
+        });
     });
 }
 
