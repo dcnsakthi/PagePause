@@ -16,11 +16,17 @@ const state = {
     timeRemaining: 0,
     timerInterval: null,
     tasks: [],
-    reminders: []
+    reminders: [],
+    timerStartTime: null,  // Track when timer/segment started
+    pausedTime: 0,         // Track accumulated paused time
+    pauseStartTime: null   // Track when pause button was pressed
 };
 
 // Constants
 const MIN_TIMER_MINUTES = 15;
+
+// Wake Lock for mobile
+let wakeLock = null;
 
 // Audio Context for Tones
 let audioContext;
@@ -52,6 +58,34 @@ function playTone(frequency = 440, duration = 200, type = 'sine') {
     
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + duration / 1000);
+}
+
+// Wake Lock API - Keep screen awake during timer
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('Wake Lock acquired');
+            
+            wakeLock.addEventListener('release', () => {
+                console.log('Wake Lock released');
+            });
+        }
+    } catch (err) {
+        console.log('Wake Lock error:', err);
+    }
+}
+
+async function releaseWakeLock() {
+    if (wakeLock !== null) {
+        try {
+            await wakeLock.release();
+            wakeLock = null;
+            console.log('Wake Lock manually released');
+        } catch (err) {
+            console.log('Wake Lock release error:', err);
+        }
+    }
 }
 
 // Notification helpers
@@ -496,6 +530,11 @@ function startTimer() {
     state.currentSession = 1;
     state.isBreak = false;
     state.timeRemaining = state.focusPeriod * 60;
+    state.timerStartTime = Date.now();  // Track start time
+    state.pausedTime = 0;               // Reset paused time
+    
+    // Request wake lock to prevent screen from sleeping on mobile
+    requestWakeLock();
     
     // Hide setup, show active timer
     document.querySelector('.timer-section').style.display = 'none';
@@ -524,7 +563,19 @@ function startTimer() {
 function updateTimer() {
     if (state.isPaused) return;
     
-    state.timeRemaining--;
+    // Calculate actual elapsed time based on timestamp
+    if (state.timerStartTime) {
+        const now = Date.now();
+        const elapsedMs = now - state.timerStartTime - state.pausedTime;
+        const totalDuration = (state.isBreak ? state.breakPeriod : state.focusPeriod) * 60;
+        const calculatedRemaining = totalDuration - Math.floor(elapsedMs / 1000);
+        
+        // Use calculated time to stay accurate even if page was hidden
+        state.timeRemaining = Math.max(0, calculatedRemaining);
+    } else {
+        // Fallback to simple countdown
+        state.timeRemaining--;
+    }
     
     if (state.timeRemaining <= 0) {
         handleSessionComplete();
@@ -552,6 +603,8 @@ function handleSessionComplete() {
         
         state.isBreak = false;
         state.timeRemaining = state.focusPeriod * 60;
+        state.timerStartTime = Date.now();  // Reset start time for new session
+        state.pausedTime = 0;
         
         if (state.startFocusTone) {
             playTone(523.25, 200);
@@ -570,6 +623,8 @@ function handleSessionComplete() {
         // Start break
         state.isBreak = true;
         state.timeRemaining = state.breakPeriod * 60;
+        state.timerStartTime = Date.now();  // Reset start time for break
+        state.pausedTime = 0;
         
         if (state.startBreakTone) {
             playTone(392.00, 200); // G4
@@ -586,6 +641,9 @@ function handleSessionComplete() {
 // Complete Timer
 function completeTimer() {
     clearInterval(state.timerInterval);
+    
+    // Release wake lock
+    releaseWakeLock();
     
     // Play completion tone
     playTone(523.25, 150);
@@ -630,12 +688,13 @@ function updateTimerDisplay() {
 
 // Toggle Pause
 function togglePause() {
+    const wasPaused = state.isPaused;
     state.isPaused = !state.isPaused;
     
-    // Save state when pausing/resuming
-    saveStateToStorage();
-    
     if (state.isPaused) {
+        // Just paused - record when pause started
+        state.pauseStartTime = Date.now();
+        
         elements.pauseButton.innerHTML = `
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
@@ -643,6 +702,13 @@ function togglePause() {
             Resume
         `;
     } else {
+        // Resuming - add the paused duration to total paused time
+        if (state.pauseStartTime) {
+            const pauseDuration = Date.now() - state.pauseStartTime;
+            state.pausedTime += pauseDuration;
+            state.pauseStartTime = null;
+        }
+        
         elements.pauseButton.innerHTML = `
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="4" width="4" height="16"/>
@@ -651,6 +717,9 @@ function togglePause() {
             Pause
         `;
     }
+    
+    // Save state when pausing/resuming
+    saveStateToStorage();
 }
 
 // Stop Timer
@@ -681,6 +750,11 @@ function resetTimer() {
     state.currentSession = 0;
     state.isBreak = false;
     state.timeRemaining = 0;
+    state.timerStartTime = null;
+    state.pausedTime = 0;
+    
+    // Release wake lock when timer is reset
+    releaseWakeLock();
     
     document.title = 'PagePause - Eye Wellness Timer for Readers';
     
@@ -1028,10 +1102,25 @@ function renderReminders() {
     }).join('');
 }
 
-// Visibility Change Handler (pause timer when tab is hidden)
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden && state.isTimerRunning && !state.isPaused) {
-        // Don't auto-pause, but we could log or handle this
+// Visibility Change Handler - Keep timer running even when page is hidden
+document.addEventListener('visibilitychange', async () => {
+    if (document.hidden) {
+        // Page is hidden (tab switched, phone locked, etc.)
+        // Timer continues running in background using timestamp-based calculation
+        console.log('Page hidden - timer continues running');
+    } else {
+        // Page is visible again
+        console.log('Page visible - syncing timer');
+        
+        // Reacquire wake lock if timer is running and not paused
+        if (state.isTimerRunning && !state.isPaused) {
+            await requestWakeLock();
+        }
+        
+        // Force an update to recalculate time in case browser throttled execution
+        if (state.isTimerRunning) {
+            updateTimer();
+        }
     }
 });
 
