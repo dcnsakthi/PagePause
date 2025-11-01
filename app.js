@@ -1,9 +1,9 @@
 // PagePause - Eye Wellness Timer for Readers
 // State Management
 const state = {
-    totalMinutes: 30,
-    focusPeriod: 30,
-    breakPeriod: 15,
+    totalMinutes: 50,
+    focusPeriod: 20,
+    breakPeriod: 5,
     skipBreaks: false,
     startFocusTone: true,
     startBreakTone: true,
