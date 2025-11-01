@@ -650,6 +650,19 @@ body {
     gap: 6px;
 }
 
+.timer-status-info .status-item.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.timer-status-info .status-item.clickable:hover {
+    background-color: var(--hover-bg);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
 .timer-status-info .status-count {
     font-weight: 600;
     color: var(--primary-color);

@@ -705,11 +705,11 @@ function updateTimerStatusInfo() {
     const statusParts = [];
     
     if (activeReminders > 0) {
-        statusParts.push(`<span class="status-item">Reminders: <span class="status-count">${activeReminders}</span></span>`);
+        statusParts.push(`<span class="status-item clickable" onclick="switchToTasksTab()">Reminders: <strong class="status-count">${activeReminders}</strong></span>`);
     }
     
     if (activeTasks > 0) {
-        statusParts.push(`<span class="status-item">Tasks: <span class="status-count">${activeTasks}</span></span>`);
+        statusParts.push(`<span class="status-item clickable" onclick="switchToTasksTab()">Tasks: <strong class="status-count">${activeTasks}</strong></span>`);
     }
     
     // Only show if there are tasks or reminders
@@ -719,6 +719,14 @@ function updateTimerStatusInfo() {
     } else {
         elements.timerStatusInfo.innerHTML = '';
         elements.timerStatusInfo.style.display = 'none';
+    }
+}
+
+// Function to switch to Tasks tab
+function switchToTasksTab() {
+    const tasksTab = document.querySelector('[data-tab="tasks"]');
+    if (tasksTab) {
+        tasksTab.click();
     }
 }
 
