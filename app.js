@@ -705,10 +705,27 @@ function completeTimer() {
     
     showNotification('Great Work! 🎉', 'You\'ve completed all your focus sessions. Your eyes thank you!');
     
-    // Reset UI
+    // Show completion splash screen
     setTimeout(() => {
-        resetTimer();
-    }, 2000);
+        showCompletionSplash();
+    }, 1000);
+}
+
+// Show Completion Splash Screen
+function showCompletionSplash() {
+    const completionSplash = document.getElementById('completionSplash');
+    completionSplash.classList.add('show');
+    
+    // Hide splash screen and reset timer after 5 seconds
+    setTimeout(() => {
+        completionSplash.classList.add('fade-out');
+        
+        // Reset timer and remove splash after animation completes
+        setTimeout(() => {
+            completionSplash.classList.remove('show', 'fade-out');
+            resetTimer();
+        }, 500); // Match the CSS transition duration
+    }, 5000);
 }
 
 // Update Timer Display
