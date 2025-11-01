@@ -44,6 +44,89 @@ body {
     scrollbar-gutter: stable;
 }
 
+/* Welcome Splash Screen */
+.welcome-splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--background) 0%, #0d1f1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+}
+
+.welcome-splash.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.welcome-content {
+    text-align: center;
+    animation: welcomeSlideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.welcome-logo {
+    width: 120px;
+    height: 120px;
+    color: var(--secondary-color);
+    filter: drop-shadow(0 4px 16px rgba(74, 157, 127, 0.5));
+    animation: welcomeLogoFloat 2s ease-in-out infinite;
+    margin-bottom: 24px;
+}
+
+.welcome-name {
+    font-size: clamp(36px, 8vw, 56px);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--secondary-color), var(--text-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+    animation: welcomeFadeIn 0.8s ease-out 0.2s both;
+}
+
+.welcome-tagline {
+    color: var(--text-secondary);
+    font-size: clamp(16px, 3vw, 20px);
+    animation: welcomeFadeIn 0.8s ease-out 0.4s both;
+}
+
+@keyframes welcomeSlideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes welcomeFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes welcomeLogoFloat {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
 .container {
     max-width: 800px;
     margin: 0 auto;

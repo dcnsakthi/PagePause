@@ -1,4 +1,20 @@
 // PagePause - Eye Wellness Timer for Readers
+
+// Welcome Splash Screen Handler
+window.addEventListener('DOMContentLoaded', () => {
+    const welcomeSplash = document.getElementById('welcomeSplash');
+    
+    // Hide splash screen after 3 seconds
+    setTimeout(() => {
+        welcomeSplash.classList.add('fade-out');
+        
+        // Remove from DOM after animation completes
+        setTimeout(() => {
+            welcomeSplash.style.display = 'none';
+        }, 500); // Match the CSS transition duration
+    }, 3000);
+});
+
 // State Management
 const state = {
     totalMinutes: 50,
