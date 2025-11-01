@@ -496,8 +496,12 @@ body {
 /* Active Timer */
 .active-timer {
     text-align: center;
-    padding: 40px 20px;
+    padding: 40px 10px;
     overflow: visible;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .active-timer.hidden {
@@ -507,22 +511,27 @@ body {
 .timer-type {
     font-size: 24px;
     font-weight: 600;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     color: var(--secondary-color);
 }
 
 .countdown-circle {
     position: relative;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 30px;
     width: 200px;
     height: 200px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 90vw;
+    max-height: 90vw;
 }
 
 .progress-ring {
     transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .progress-ring-circle-bg {
@@ -1091,8 +1100,19 @@ body {
 .reminder-modal-text {
     font-size: clamp(16px, 3vw, 18px);
     color: var(--text-secondary);
-    margin-bottom: 32px;
+    margin-bottom: 16px;
     line-height: 1.6;
+}
+
+.reminder-queue-info {
+    font-size: clamp(13px, 2.5vw, 14px);
+    color: var(--secondary-color);
+    background: rgba(74, 157, 127, 0.1);
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-weight: 500;
+    border: 1px solid rgba(74, 157, 127, 0.3);
 }
 
 .reminder-modal-buttons {
@@ -1359,17 +1379,29 @@ body {
     
     /* Fix timer circle being cut off on mobile */
     .active-timer {
-        padding: 30px 10px;
+        padding: 20px 5px;
+    }
+    
+    .timer-type {
+        font-size: 20px;
+        margin-bottom: 20px;
     }
     
     .countdown-circle {
-        width: 180px;
-        height: 180px;
+        width: min(180px, 80vw);
+        height: min(180px, 80vw);
+        margin-bottom: 20px;
     }
     
     .progress-ring {
-        width: 180px;
-        height: 180px;
+        width: 100%;
+        height: 100%;
+        max-width: 180px;
+        max-height: 180px;
+    }
+    
+    .countdown-text {
+        font-size: 36px;
     }
 }
 
@@ -1384,22 +1416,34 @@ body {
         max-width: 90%;
     }
 
-    .countdown-text {
-        font-size: 32px;
+    .active-timer {
+        padding: 15px 5px;
+    }
+    
+    .timer-type {
+        font-size: 18px;
+        margin-bottom: 15px;
     }
 
     .countdown-circle {
-        width: 160px;
-        height: 160px;
+        width: min(160px, 70vw);
+        height: min(160px, 70vw);
+        margin-bottom: 15px;
     }
 
     .progress-ring {
-        width: 160px;
-        height: 160px;
+        width: 100%;
+        height: 100%;
+        max-width: 160px;
+        max-height: 160px;
     }
     
-    .active-timer {
-        padding: 20px 10px;
+    .countdown-text {
+        font-size: 28px;
+    }
+    
+    .session-info {
+        font-size: 14px;
     }
     
     .reminder-modal-content {

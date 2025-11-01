@@ -114,6 +114,7 @@ const elements = {
     // Reminder Modal
     reminderModal: document.getElementById('reminderModal'),
     reminderModalText: document.getElementById('reminderModalText'),
+    reminderQueueInfo: document.getElementById('reminderQueueInfo'),
     closeReminderModal: document.getElementById('closeReminderModal'),
     snoozeReminder: document.getElementById('snoozeReminder'),
     dismissReminder: document.getElementById('dismissReminder'),
@@ -813,20 +814,65 @@ function triggerReminder(reminder) {
     showNotification('⏰ Reminder!', reminder.text, 'icons/icon-192.png');
 }
 
-// Store current reminder for snooze
+// Store current reminder and queue for managing multiple reminders
 let currentReminder = null;
+let reminderQueue = [];
 
 function showReminderModal(reminder) {
+    // If a reminder is already showing, add this one to the queue
+    if (currentReminder && elements.reminderModal.style.display === 'flex') {
+        // Check if this reminder is not already in the queue
+        if (!reminderQueue.find(r => r.id === reminder.id)) {
+            reminderQueue.push(reminder);
+            console.log(`Reminder queued: "${reminder.text}" (${reminderQueue.length} in queue)`);
+            
+            // Update queue info on currently displayed modal
+            updateQueueInfo();
+        }
+        return;
+    }
+    
+    // Show the reminder
     currentReminder = reminder;
     elements.reminderModalText.textContent = reminder.text;
     elements.reminderModal.style.display = 'flex';
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    
+    // Update queue info
+    updateQueueInfo();
+    
+    console.log(`Showing reminder: "${reminder.text}"`);
+}
+
+function updateQueueInfo() {
+    if (elements.reminderQueueInfo) {
+        if (reminderQueue.length > 0) {
+            elements.reminderQueueInfo.textContent = `📋 ${reminderQueue.length} more reminder${reminderQueue.length > 1 ? 's' : ''} waiting`;
+            elements.reminderQueueInfo.style.display = 'block';
+        } else {
+            elements.reminderQueueInfo.style.display = 'none';
+        }
+    }
 }
 
 function closeReminderModal() {
     elements.reminderModal.style.display = 'none';
     document.body.style.overflow = '';
     currentReminder = null;
+    
+    // Show next reminder in queue if any
+    processReminderQueue();
+}
+
+function processReminderQueue() {
+    if (reminderQueue.length > 0) {
+        const nextReminder = reminderQueue.shift();
+        console.log(`Processing next reminder from queue: "${nextReminder.text}" (${reminderQueue.length} remaining)`);
+        // Small delay before showing next reminder
+        setTimeout(() => {
+            showReminderModal(nextReminder);
+        }, 300);
+    }
 }
 
 function snoozeCurrentReminder() {
@@ -853,6 +899,10 @@ function snoozeCurrentReminder() {
         playTone(523.25, 150);
     }
     
+    // Remove the original reminder from state
+    removeReminder(currentReminder.id);
+    
+    // Close modal and process queue
     closeReminderModal();
 }
 
@@ -861,6 +911,8 @@ function dismissCurrentReminder() {
     
     // Remove from state
     removeReminder(currentReminder.id);
+    
+    // Close modal and process queue
     closeReminderModal();
 }
 
@@ -874,6 +926,10 @@ function cancelReminder(id) {
             clearInterval(reminder.intervalId);
         }
     }
+    
+    // Also remove from queue if it's there
+    reminderQueue = reminderQueue.filter(r => r.id !== id);
+    updateQueueInfo();
     
     removeReminder(id);
 }
