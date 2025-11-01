@@ -48,6 +48,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 /* Header */
@@ -499,9 +501,11 @@ body {
     padding: 40px 10px;
     overflow: visible;
     width: 100%;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    box-sizing: border-box;
 }
 
 .active-timer.hidden {
@@ -523,8 +527,9 @@ body {
     margin-bottom: 30px;
     width: 200px;
     height: 200px;
-    max-width: 90vw;
-    max-height: 90vw;
+    max-width: min(200px, 85vw);
+    max-height: min(200px, 85vw);
+    flex-shrink: 0;
 }
 
 .progress-ring {
@@ -1302,6 +1307,8 @@ body {
 @media (max-width: 768px) {
     .container {
         padding: 16px;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     .header {
@@ -1380,6 +1387,7 @@ body {
     /* Fix timer circle being cut off on mobile */
     .active-timer {
         padding: 20px 5px;
+        width: 100%;
     }
     
     .timer-type {
@@ -1388,16 +1396,16 @@ body {
     }
     
     .countdown-circle {
-        width: min(180px, 80vw);
-        height: min(180px, 80vw);
+        width: min(180px, 75vw);
+        height: min(180px, 75vw);
         margin-bottom: 20px;
+        max-width: 75vw;
+        max-height: 75vw;
     }
     
     .progress-ring {
         width: 100%;
         height: 100%;
-        max-width: 180px;
-        max-height: 180px;
     }
     
     .countdown-text {
@@ -1406,6 +1414,10 @@ body {
 }
 
 @media (max-width: 480px) {
+    .container {
+        padding: 12px 8px;
+    }
+    
     .time-value input[type="number"],
     .time-value span:first-child {
         font-size: 72px;
@@ -1418,6 +1430,7 @@ body {
 
     .active-timer {
         padding: 15px 5px;
+        width: 100%;
     }
     
     .timer-type {
@@ -1426,16 +1439,16 @@ body {
     }
 
     .countdown-circle {
-        width: min(160px, 70vw);
-        height: min(160px, 70vw);
+        width: min(160px, 65vw);
+        height: min(160px, 65vw);
         margin-bottom: 15px;
+        max-width: 65vw;
+        max-height: 65vw;
     }
 
     .progress-ring {
         width: 100%;
         height: 100%;
-        max-width: 160px;
-        max-height: 160px;
     }
     
     .countdown-text {
@@ -1468,6 +1481,32 @@ body {
     
     .confirmation-modal-title {
         font-size: 22px;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 360px) {
+    .container {
+        padding: 10px 5px;
+    }
+    
+    .active-timer {
+        padding: 10px 2px;
+    }
+    
+    .countdown-circle {
+        width: min(140px, 60vw);
+        height: min(140px, 60vw);
+        max-width: 60vw;
+        max-height: 60vw;
+    }
+    
+    .countdown-text {
+        font-size: 24px;
+    }
+    
+    .timer-type {
+        font-size: 16px;
     }
 }
 
