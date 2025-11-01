@@ -319,8 +319,28 @@ function updateBreaksInfo() {
         return;
     }
     
-    const sessions = Math.floor(state.totalMinutes / state.focusPeriod);
-    const breaks = Math.max(0, sessions - 1);
+    // Simulate the actual timer flow to count breaks
+    let timeLeft = state.totalMinutes;
+    let sessions = 0;
+    let breaks = 0;
+    
+    // Keep adding focus sessions and breaks while we have time
+    while (timeLeft >= state.focusPeriod) {
+        // Add a focus session
+        timeLeft -= state.focusPeriod;
+        sessions++;
+        
+        // After each session (except the last possible one), try to add a break
+        if (timeLeft >= state.breakPeriod) {
+            timeLeft -= state.breakPeriod;
+            breaks++;
+        } else {
+            // Not enough time for a break, but we might squeeze in another partial session
+            // However, timer requires full focus periods, so we stop here
+            break;
+        }
+    }
+    
     state.totalSessions = sessions;
     
     elements.breaksInfo.innerHTML = `You'll have <strong>${breaks}</strong> break${breaks !== 1 ? 's' : ''}.`;
