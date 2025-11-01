@@ -520,7 +520,7 @@ body {
 /* Active Timer */
 .active-timer {
     text-align: center;
-    padding: 40px 10px;
+    padding: 20px 10px;
     overflow: visible;
     width: 100%;
     max-width: 100%;
@@ -537,7 +537,7 @@ body {
 .timer-type {
     font-size: 24px;
     font-weight: 600;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     color: var(--secondary-color);
 }
 
@@ -546,7 +546,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     width: 200px;
     height: 200px;
     max-width: min(200px, 85vw);
@@ -590,7 +590,7 @@ body {
 .session-info {
     color: var(--text-secondary);
     font-size: 16px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .timer-controls {
@@ -632,7 +632,7 @@ body {
 
 /* Timer Status Info */
 .timer-status-info {
-    margin-top: 20px;
+    margin-top: 16px;
     text-align: center;
     font-size: 14px;
     color: var(--text-secondary);
@@ -641,6 +641,7 @@ body {
     justify-content: center;
     gap: 20px;
     flex-wrap: wrap;
+    min-height: 20px;
 }
 
 .timer-status-info .status-item {
