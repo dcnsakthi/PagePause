@@ -131,6 +131,7 @@ const elements = {
     sessionInfo: document.getElementById('sessionInfo'),
     pauseButton: document.getElementById('pauseButton'),
     stopButton: document.getElementById('stopButton'),
+    timerStatusInfo: document.getElementById('timerStatusInfo'),
     
     // Tabs
     tabBtns: document.querySelectorAll('.tab-btn'),
@@ -684,6 +685,37 @@ function updateTimerDisplay() {
     
     // Update document title
     document.title = `${timeString} - PagePause`;
+    
+    // Update timer status info (tasks and reminders count)
+    updateTimerStatusInfo();
+}
+
+// Update Timer Status Info (Tasks and Reminders Count)
+function updateTimerStatusInfo() {
+    if (!elements.timerStatusInfo) return;
+    
+    const activeTasks = state.tasks.filter(task => !task.completed).length;
+    const activeReminders = state.reminders.length;
+    
+    // Build status string
+    const statusParts = [];
+    
+    if (activeReminders > 0) {
+        statusParts.push(`<span class="status-item">Reminders: <span class="status-count">${activeReminders}</span></span>`);
+    }
+    
+    if (activeTasks > 0) {
+        statusParts.push(`<span class="status-item">Tasks: <span class="status-count">${activeTasks}</span></span>`);
+    }
+    
+    // Only show if there are tasks or reminders
+    if (statusParts.length > 0) {
+        elements.timerStatusInfo.innerHTML = statusParts.join(' ');
+        elements.timerStatusInfo.style.display = 'flex';
+    } else {
+        elements.timerStatusInfo.innerHTML = '';
+        elements.timerStatusInfo.style.display = 'none';
+    }
 }
 
 // Toggle Pause
@@ -815,6 +847,7 @@ function renderTasks() {
                 <p>No reading tasks yet. Add what you're reading today!</p>
             </li>
         `;
+        updateTimerStatusInfo();
         return;
     }
     
@@ -835,6 +868,8 @@ function renderTasks() {
             </button>
         </li>
     `).join('');
+    
+    updateTimerStatusInfo();
 }
 
 // Utility Functions
@@ -1065,6 +1100,7 @@ function renderReminders() {
                 No active reminders. Set one above!
             </li>
         `;
+        updateTimerStatusInfo();
         return;
     }
     
@@ -1100,6 +1136,8 @@ function renderReminders() {
             </li>
         `;
     }).join('');
+    
+    updateTimerStatusInfo();
 }
 
 // Visibility Change Handler - Keep timer running even when page is hidden

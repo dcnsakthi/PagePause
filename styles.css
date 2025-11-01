@@ -615,6 +615,30 @@ body {
     height: 20px;
 }
 
+/* Timer Status Info */
+.timer-status-info {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.timer-status-info .status-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.timer-status-info .status-count {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
 /* Tasks Section */
 .tasks-section {
     width: 100%;
