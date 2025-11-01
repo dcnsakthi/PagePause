@@ -1,7 +1,7 @@
 // PagePause - Eye Wellness Timer for Readers
 // State Management
 const state = {
-    totalMinutes: 25,
+    totalMinutes: 30,
     focusPeriod: 30,
     breakPeriod: 15,
     skipBreaks: false,
@@ -18,6 +18,9 @@ const state = {
     tasks: [],
     reminders: []
 };
+
+// Constants
+const MIN_TIMER_MINUTES = 15;
 
 // Audio Context for Tones
 let audioContext;
@@ -277,6 +280,29 @@ function updateBreaksInfo() {
     elements.breaksInfo.innerHTML = `You'll have <strong>${breaks}</strong> break${breaks !== 1 ? 's' : ''}.`;
 }
 
+// Validate timer settings
+function validateTimerSettings() {
+    // Ensure total timer is at least MIN_TIMER_MINUTES
+    if (state.totalMinutes < MIN_TIMER_MINUTES) {
+        state.totalMinutes = MIN_TIMER_MINUTES;
+        elements.timeValue.value = MIN_TIMER_MINUTES;
+    }
+    
+    // Ensure total timer is >= focus period
+    if (state.totalMinutes < state.focusPeriod) {
+        state.totalMinutes = state.focusPeriod;
+        elements.timeValue.value = state.focusPeriod;
+        
+        // Show a brief message
+        const breaksInfoEl = elements.breaksInfo;
+        const originalHTML = breaksInfoEl.innerHTML;
+        breaksInfoEl.innerHTML = `<span style="color: var(--warning);">⚠️ Timer adjusted to match focus period (${state.focusPeriod} mins)</span>`;
+        setTimeout(() => {
+            updateBreaksInfo();
+        }, 3000);
+    }
+}
+
 // Setup Event Listeners
 function setupEventListeners() {
     // Timer controls
@@ -284,34 +310,39 @@ function setupEventListeners() {
         initAudio();
         state.totalMinutes = Math.min(240, state.totalMinutes + 5);
         elements.timeValue.value = state.totalMinutes;
+        validateTimerSettings();
         updateBreaksInfo();
         saveStateToStorage();
     });
     
     elements.decreaseTime.addEventListener('click', () => {
         initAudio();
-        state.totalMinutes = Math.max(5, state.totalMinutes - 5);
+        state.totalMinutes = Math.max(MIN_TIMER_MINUTES, state.totalMinutes - 5);
         elements.timeValue.value = state.totalMinutes;
+        validateTimerSettings();
         updateBreaksInfo();
         saveStateToStorage();
     });
     
     // Direct time input
     elements.timeValue.addEventListener('input', (e) => {
-        let value = parseInt(e.target.value) || 5;
-        // Clamp value between 5 and 240
-        value = Math.max(5, Math.min(240, value));
+        let value = parseInt(e.target.value) || MIN_TIMER_MINUTES;
+        // Clamp value between MIN_TIMER_MINUTES and 240
+        value = Math.max(MIN_TIMER_MINUTES, Math.min(240, value));
         state.totalMinutes = value;
         updateBreaksInfo();
     });
     
     elements.timeValue.addEventListener('change', (e) => {
         // Round to nearest 5 on blur/change
-        let value = parseInt(e.target.value) || 5;
-        value = Math.max(5, Math.min(240, value));
+        let value = parseInt(e.target.value) || MIN_TIMER_MINUTES;
+        value = Math.max(MIN_TIMER_MINUTES, Math.min(240, value));
         value = Math.round(value / 5) * 5;
+        // Ensure it's at least MIN_TIMER_MINUTES after rounding
+        value = Math.max(MIN_TIMER_MINUTES, value);
         state.totalMinutes = value;
         elements.timeValue.value = value;
+        validateTimerSettings();
         updateBreaksInfo();
         saveStateToStorage();
     });
@@ -339,12 +370,14 @@ function setupEventListeners() {
     
     elements.breakPeriod.addEventListener('change', (e) => {
         state.breakPeriod = parseInt(e.target.value);
+        validateTimerSettings();
         updateBreaksInfo();
         saveStateToStorage();
     });
     
     elements.focusPeriod.addEventListener('change', (e) => {
         state.focusPeriod = parseInt(e.target.value);
+        validateTimerSettings();
         updateBreaksInfo();
         saveStateToStorage();
     });
@@ -447,6 +480,17 @@ function startTimer() {
     initAudio();
     
     if (state.isTimerRunning) return;
+    
+    // Validate settings before starting
+    if (state.totalMinutes < MIN_TIMER_MINUTES) {
+        alert(`Focus timer must be at least ${MIN_TIMER_MINUTES} minutes.`);
+        return;
+    }
+    
+    if (state.totalMinutes < state.focusPeriod) {
+        alert(`Focus timer (${state.totalMinutes} mins) must be greater than or equal to focus period (${state.focusPeriod} mins). Please adjust your settings.`);
+        return;
+    }
     
     state.isTimerRunning = true;
     state.currentSession = 1;

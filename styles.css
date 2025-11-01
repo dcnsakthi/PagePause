@@ -243,7 +243,7 @@ body {
 }
 
 .time-value input[type="number"] {
-    font-size: clamp(64px, 12vw, 96px);
+    font-size: clamp(56px, 10vw, 96px);
     font-weight: 700;
     line-height: 1;
     font-family: var(--font-mono);
@@ -254,13 +254,13 @@ body {
     border: none;
     outline: none;
     width: auto;
-    max-width: 100%;
-    min-width: 1ch;
+    max-width: 95%;
+    min-width: 3ch;
     text-align: center;
     background-color: transparent;
     cursor: pointer;
     transition: var(--transition);
-    padding: 0 8px;
+    padding: 0 4px;
 }
 
 .time-value input[type="number"]:hover {
@@ -1306,9 +1306,9 @@ body {
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
-        padding: 16px;
-        padding-left: 12px;
-        padding-right: 12px;
+        padding: 12px 8px;
+        padding-left: 8px;
+        padding-right: 8px;
     }
 
     .header {
@@ -1333,7 +1333,13 @@ body {
     }
 
     .timer-card {
-        padding: 24px;
+        padding: 20px 16px;
+    }
+    
+    .time-value input[type="number"] {
+        font-size: clamp(48px, 9vw, 72px);
+        max-width: 90%;
+        min-width: 3ch;
     }
 
     .exercise-cards {
@@ -1386,21 +1392,21 @@ body {
     
     /* Fix timer circle being cut off on mobile */
     .active-timer {
-        padding: 20px 5px;
+        padding: 15px 2px;
         width: 100%;
     }
     
     .timer-type {
         font-size: 20px;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
     
     .countdown-circle {
-        width: min(180px, 75vw);
-        height: min(180px, 75vw);
-        margin-bottom: 20px;
-        max-width: 75vw;
-        max-height: 75vw;
+        width: min(170px, 70vw);
+        height: min(170px, 70vw);
+        margin-bottom: 15px;
+        max-width: 70vw;
+        max-height: 70vw;
     }
     
     .progress-ring {
@@ -1409,41 +1415,43 @@ body {
     }
     
     .countdown-text {
-        font-size: 36px;
+        font-size: clamp(30px, 8vw, 36px);
     }
 }
 
 @media (max-width: 480px) {
     .container {
-        padding: 12px 8px;
+        padding: 10px 5px;
     }
     
     .time-value input[type="number"],
     .time-value span:first-child {
-        font-size: 72px;
+        font-size: clamp(42px, 8vw, 60px);
     }
     
     .time-value input[type="number"] {
         width: auto;
-        max-width: 90%;
+        max-width: 85%;
+        min-width: 3ch;
+        padding: 0 2px;
     }
 
     .active-timer {
-        padding: 15px 5px;
+        padding: 10px 0;
         width: 100%;
     }
     
     .timer-type {
         font-size: 18px;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
     }
 
     .countdown-circle {
-        width: min(160px, 65vw);
-        height: min(160px, 65vw);
-        margin-bottom: 15px;
-        max-width: 65vw;
-        max-height: 65vw;
+        width: min(150px, 60vw);
+        height: min(150px, 60vw);
+        margin-bottom: 12px;
+        max-width: 60vw;
+        max-height: 60vw;
     }
 
     .progress-ring {
@@ -1452,11 +1460,16 @@ body {
     }
     
     .countdown-text {
-        font-size: 28px;
+        font-size: clamp(24px, 6vw, 28px);
     }
     
     .session-info {
+        font-size: 13px;
+    }
+    
+    .control-button {
         font-size: 14px;
+        padding: 12px 20px;
     }
     
     .reminder-modal-content {
@@ -1487,26 +1500,37 @@ body {
 /* Extra small mobile devices */
 @media (max-width: 360px) {
     .container {
-        padding: 10px 5px;
+        padding: 8px 3px;
+    }
+    
+    .time-value input[type="number"] {
+        font-size: clamp(38px, 7vw, 52px);
+        max-width: 80%;
+        min-width: 3ch;
     }
     
     .active-timer {
-        padding: 10px 2px;
+        padding: 8px 0;
     }
     
     .countdown-circle {
-        width: min(140px, 60vw);
-        height: min(140px, 60vw);
-        max-width: 60vw;
-        max-height: 60vw;
+        width: min(130px, 55vw);
+        height: min(130px, 55vw);
+        max-width: 55vw;
+        max-height: 55vw;
     }
     
     .countdown-text {
-        font-size: 24px;
+        font-size: clamp(20px, 5vw, 24px);
     }
     
     .timer-type {
         font-size: 16px;
+    }
+    
+    .control-button {
+        font-size: 13px;
+        padding: 10px 16px;
     }
 }
 
