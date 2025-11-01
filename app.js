@@ -41,8 +41,18 @@ function initAudio() {
 }
 
 // Play tone
-function playTone(frequency = 440, duration = 200, type = 'sine') {
+async function playTone(frequency = 440, duration = 200, type = 'sine') {
     if (!audioContext) return;
+    
+    // Resume audio context if suspended (required for some browsers)
+    if (audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+        } catch (err) {
+            console.log('Failed to resume audio context:', err);
+            return;
+        }
+    }
     
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -632,6 +642,8 @@ function handleSessionComplete() {
         state.pausedTime = 0;
         
         if (state.startBreakTone) {
+            console.log('Playing break tone - state.startBreakTone:', state.startBreakTone);
+            console.log('Audio context state:', audioContext ? audioContext.state : 'No audio context');
             playTone(392.00, 200); // G4
             setTimeout(() => playTone(329.63, 300), 250); // E4
         }
