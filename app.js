@@ -570,7 +570,10 @@ function updateTimerDisplay() {
     // Update progress circle
     const totalTime = state.isBreak ? state.breakPeriod * 60 : state.focusPeriod * 60;
     const progress = state.timeRemaining / totalTime;
-    const circumference = 2 * Math.PI * 90;
+    
+    // Get the actual radius from the circle element (supports responsive sizing)
+    const radius = parseFloat(elements.progressCircle.getAttribute('r')) || 90;
+    const circumference = 2 * Math.PI * radius;
     const offset = circumference * (1 - progress);
     
     elements.progressCircle.style.strokeDashoffset = offset;
@@ -932,18 +935,104 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Visit Counter
+// Visit Counter - tracks total visits across all sessions
 function updateVisitCount() {
     const VISIT_COUNT_KEY = 'pagepause-visit-count';
-    let visitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0', 10);
-    visitCount++;
-    localStorage.setItem(VISIT_COUNT_KEY, visitCount.toString());
+    const LAST_VISIT_KEY = 'pagepause-last-visit';
+    const SESSION_KEY = 'pagepause-session-id';
     
-    const visitCountElement = document.getElementById('visitCount');
-    if (visitCountElement) {
-        visitCountElement.textContent = visitCount.toLocaleString();
+    // Generate a unique session ID for this page load
+    const currentSessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    
+    // Check if this is a new session (not a page refresh within same session)
+    const lastSessionId = sessionStorage.getItem(SESSION_KEY);
+    
+    if (!lastSessionId) {
+        // New session - increment visit count
+        let visitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0', 10);
+        visitCount++;
+        localStorage.setItem(VISIT_COUNT_KEY, visitCount.toString());
+        localStorage.setItem(LAST_VISIT_KEY, new Date().toISOString());
+        
+        // Store session ID to prevent double counting on page refreshes
+        sessionStorage.setItem(SESSION_KEY, currentSessionId);
+        
+        // Update display
+        const visitCountElement = document.getElementById('visitCount');
+        if (visitCountElement) {
+            visitCountElement.textContent = visitCount.toLocaleString();
+        }
+        
+        console.log(`PagePause: Visit #${visitCount} recorded at ${new Date().toLocaleString()}`);
+    } else {
+        // Same session - just display existing count
+        const visitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0', 10);
+        const visitCountElement = document.getElementById('visitCount');
+        if (visitCountElement) {
+            visitCountElement.textContent = visitCount.toLocaleString();
+        }
     }
 }
+
+// Utility functions for managing visit count (accessible from console)
+window.PagePause = {
+    getVisitCount: function() {
+        const count = parseInt(localStorage.getItem('pagepause-visit-count') || '0', 10);
+        console.log(`Total visits: ${count}`);
+        return count;
+    },
+    
+    resetVisitCount: function() {
+        localStorage.setItem('pagepause-visit-count', '0');
+        const visitCountElement = document.getElementById('visitCount');
+        if (visitCountElement) {
+            visitCountElement.textContent = '0';
+        }
+        console.log('Visit count has been reset to 0');
+        return 0;
+    },
+    
+    setVisitCount: function(count) {
+        if (typeof count !== 'number' || count < 0) {
+            console.error('Please provide a valid positive number');
+            return;
+        }
+        localStorage.setItem('pagepause-visit-count', count.toString());
+        const visitCountElement = document.getElementById('visitCount');
+        if (visitCountElement) {
+            visitCountElement.textContent = count.toLocaleString();
+        }
+        console.log(`Visit count set to ${count}`);
+        return count;
+    },
+    
+    getLastVisit: function() {
+        const lastVisit = localStorage.getItem('pagepause-last-visit');
+        if (lastVisit) {
+            const date = new Date(lastVisit);
+            console.log(`Last visit: ${date.toLocaleString()}`);
+            return date;
+        } else {
+            console.log('No previous visit recorded');
+            return null;
+        }
+    },
+    
+    help: function() {
+        console.log(`
+PagePause Utility Functions:
+----------------------------
+• PagePause.getVisitCount()    - Get current visit count
+• PagePause.resetVisitCount()  - Reset visit count to 0
+• PagePause.setVisitCount(n)   - Set visit count to n
+• PagePause.getLastVisit()     - Get timestamp of last visit
+• PagePause.help()             - Show this help message
+
+Note: Visit count is stored in localStorage and persists across browser sessions.
+Each new browser session/tab counts as one visit. Page refreshes don't increment the count.
+        `);
+    }
+};
 
 // Initialize app
 if (document.readyState === 'loading') {

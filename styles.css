@@ -497,6 +497,7 @@ body {
 .active-timer {
     text-align: center;
     padding: 40px 20px;
+    overflow: visible;
 }
 
 .active-timer.hidden {
@@ -514,6 +515,10 @@ body {
     position: relative;
     display: inline-block;
     margin-bottom: 30px;
+    width: 200px;
+    height: 200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .progress-ring {
@@ -1351,6 +1356,21 @@ body {
     .reminder-modal-btn {
         width: 100%;
     }
+    
+    /* Fix timer circle being cut off on mobile */
+    .active-timer {
+        padding: 30px 10px;
+    }
+    
+    .countdown-circle {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .progress-ring {
+        width: 180px;
+        height: 180px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1365,12 +1385,21 @@ body {
     }
 
     .countdown-text {
-        font-size: 36px;
+        font-size: 32px;
+    }
+
+    .countdown-circle {
+        width: 160px;
+        height: 160px;
     }
 
     .progress-ring {
         width: 160px;
         height: 160px;
+    }
+    
+    .active-timer {
+        padding: 20px 10px;
     }
     
     .reminder-modal-content {
