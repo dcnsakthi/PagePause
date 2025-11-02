@@ -97,6 +97,11 @@ let isDraggingCard = false;
 let cardDragOffset = { x: 0, y: 0 };
 let cardPosition = { x: null, y: null }; // null means centered
 
+// Triple tap state for hiding cards
+let tapCount = 0;
+let tapTimer = null;
+const TAP_TIMEOUT = 500; // ms between taps to count as triple tap
+
 // Reminder modal drag state
 let isDraggingReminder = false;
 let reminderDragOffset = { x: 0, y: 0 };
@@ -365,6 +370,38 @@ function stopMindfulnessCards() {
     shuffledCards = [];
 }
 
+// Handle triple tap to hide mindfulness cards
+function handleCardTripleTap() {
+    tapCount++;
+    
+    // Clear existing timer
+    if (tapTimer) {
+        clearTimeout(tapTimer);
+    }
+    
+    // Check if triple tap completed
+    if (tapCount === 3) {
+        // Hide the cards temporarily
+        mindfulnessTemporarilyDisabled = true;
+        stopMindfulnessCards();
+        
+        // Reset tap count
+        tapCount = 0;
+        tapTimer = null;
+        
+        // Show a brief feedback (optional - you can remove this if not needed)
+        console.log('Mindfulness cards hidden via triple tap');
+        
+        return;
+    }
+    
+    // Reset tap count after timeout if not completed
+    tapTimer = setTimeout(() => {
+        tapCount = 0;
+        tapTimer = null;
+    }, TAP_TIMEOUT);
+}
+
 // Setup mindfulness card drag functionality
 function setupMindfulnessCardDrag() {
     let dragTarget = null;
@@ -434,6 +471,9 @@ function setupMindfulnessCardDrag() {
     });
     
     // Touch events for mobile
+    let touchStartTime = 0;
+    let touchStartPos = { x: 0, y: 0 };
+    
     document.addEventListener('touchstart', (e) => {
         const card = getCard();
         if (!card) return;
@@ -447,6 +487,12 @@ function setupMindfulnessCardDrag() {
         
         if (touch.clientX >= cardRect.left && touch.clientX <= cardRect.right &&
             touch.clientY >= cardRect.top && touch.clientY <= cardRect.bottom) {
+            
+            // Record touch start time and position for tap detection
+            touchStartTime = Date.now();
+            touchStartPos.x = touch.clientX;
+            touchStartPos.y = touch.clientY;
+            
             isDraggingCard = true;
             dragTarget = card;
             
@@ -483,8 +529,27 @@ function setupMindfulnessCardDrag() {
         e.preventDefault();
     }, { passive: false });
     
-    document.addEventListener('touchend', () => {
+    document.addEventListener('touchend', (e) => {
         if (isDraggingCard) {
+            // Check if this was a tap (quick touch without movement)
+            const touchEndTime = Date.now();
+            const touchDuration = touchEndTime - touchStartTime;
+            
+            // Get touch end position
+            const touch = e.changedTouches[0];
+            const touchEndPos = { x: touch.clientX, y: touch.clientY };
+            
+            // Calculate distance moved
+            const distanceMoved = Math.sqrt(
+                Math.pow(touchEndPos.x - touchStartPos.x, 2) + 
+                Math.pow(touchEndPos.y - touchStartPos.y, 2)
+            );
+            
+            // If touch was quick (<300ms) and didn't move much (<10px), count as tap
+            if (touchDuration < 300 && distanceMoved < 10) {
+                handleCardTripleTap();
+            }
+            
             dragTarget = null;
             isDraggingCard = false;
         }
@@ -1254,6 +1319,9 @@ function handleSessionComplete() {
         
         // Update media session
         updateMediaSession();
+        
+        // Reset mindfulness temporary disable flag for new break
+        mindfulnessTemporarilyDisabled = false;
         
         // Start mindfulness cards if eye exercises enabled
         startMindfulnessCards();
