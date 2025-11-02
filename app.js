@@ -51,6 +51,57 @@ let hasInteracted = false;
 // Media Session for lock screen display
 let mediaSessionUpdateInterval = null;
 
+// Mindfulness cards data
+const mindfulnessCards = [
+    {
+        icon: '👁️',
+        title: '20-20-20 Rule',
+        text: 'Every 20 minutes, look at something 20 feet away for 20 seconds.'
+    },
+    {
+        icon: '👀',
+        title: 'Blink Exercise',
+        text: 'Blink slowly 10 times. Close your eyes and take 3 deep breaths.'
+    },
+    {
+        icon: '🔄',
+        title: 'Eye Rolls',
+        text: 'Slowly roll your eyes in a circle, 5 times clockwise and 5 times counter-clockwise.'
+    },
+    {
+        icon: '🫴',
+        title: 'Palm Press',
+        text: 'Rub your palms together and gently place them over your closed eyes for 30 seconds.'
+    },
+    {
+        icon: '➡️⬅️',
+        title: 'Near & Far Focus',
+        text: 'Hold your thumb 10 inches away. Focus on it, then focus on something far. Repeat 10 times.'
+    },
+    {
+        icon: '✏️',
+        title: 'Figure Eight',
+        text: 'Imagine a large figure 8 on the wall. Trace it with your eyes slowly for 30 seconds.'
+    }
+];
+
+// Mindfulness card state
+let mindfulnessCardInterval = null;
+let mindfulnessStartTimeout = null;
+let mindfulnessStopTimeout = null;
+let shuffledCards = [];
+let mindfulnessTemporarilyDisabled = false;
+
+// Card drag state
+let isDraggingCard = false;
+let cardDragOffset = { x: 0, y: 0 };
+let cardPosition = { x: null, y: null }; // null means centered
+
+// Reminder modal drag state
+let isDraggingReminder = false;
+let reminderDragOffset = { x: 0, y: 0 };
+let reminderPosition = { x: null, y: null }; // null means centered
+
 // Initialize audio context on first user interaction
 function initAudio() {
     if (!hasInteracted) {
@@ -213,6 +264,366 @@ function stopMediaSession() {
     }
 }
 
+// Mindfulness Card Functions
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+function showNextMindfulnessCard() {
+    if (shuffledCards.length === 0) {
+        shuffledCards = shuffleArray(mindfulnessCards);
+    }
+    
+    const card = shuffledCards.shift();
+    
+    elements.mindfulnessCardIcon.textContent = card.icon;
+    elements.mindfulnessCardTitle.textContent = card.title;
+    elements.mindfulnessCardText.textContent = card.text;
+    
+    elements.mindfulnessCardOverlay.style.display = 'flex';
+    
+    // Apply saved position if available
+    const floatingCard = document.querySelector('.mindfulness-floating-card');
+    if (cardPosition.x !== null && cardPosition.y !== null && floatingCard) {
+        floatingCard.style.position = 'fixed';
+        floatingCard.style.left = cardPosition.x + 'px';
+        floatingCard.style.top = cardPosition.y + 'px';
+        floatingCard.style.transform = 'none';
+    }
+    
+    // Trigger reflow for animation
+    void elements.mindfulnessCardOverlay.offsetWidth;
+}
+
+function startMindfulnessCards() {
+    // Only show during breaks with eye exercises enabled
+    if (!state.isBreak || !state.eyeExercises || mindfulnessTemporarilyDisabled) {
+        return;
+    }
+    
+    // Clear any existing timers
+    stopMindfulnessCards();
+    
+    // Calculate when to start and stop showing cards
+    const breakDuration = state.breakPeriod * 60; // in seconds
+    const startDelay = 5; // Wait 5 seconds after break starts
+    const stopBefore = 5; // Stop 5 seconds before break ends
+    
+    // Only show cards if break is long enough (> 10 seconds)
+    if (breakDuration <= 10) {
+        return;
+    }
+    
+    // Start showing cards after 5 seconds
+    mindfulnessStartTimeout = setTimeout(() => {
+        // Show first card immediately
+        shuffledCards = shuffleArray(mindfulnessCards);
+        showNextMindfulnessCard();
+        
+        // Show new card every 30 seconds
+        mindfulnessCardInterval = setInterval(() => {
+            showNextMindfulnessCard();
+        }, 30000);
+        
+    }, startDelay * 1000);
+    
+    // Stop showing cards 5 seconds before break ends
+    const stopTime = (breakDuration - stopBefore) * 1000;
+    mindfulnessStopTimeout = setTimeout(() => {
+        stopMindfulnessCards();
+    }, stopTime);
+}
+
+function stopMindfulnessCards() {
+    // Clear all timers
+    if (mindfulnessStartTimeout) {
+        clearTimeout(mindfulnessStartTimeout);
+        mindfulnessStartTimeout = null;
+    }
+    
+    if (mindfulnessStopTimeout) {
+        clearTimeout(mindfulnessStopTimeout);
+        mindfulnessStopTimeout = null;
+    }
+    
+    if (mindfulnessCardInterval) {
+        clearInterval(mindfulnessCardInterval);
+        mindfulnessCardInterval = null;
+    }
+    
+    // Hide overlay
+    if (elements.mindfulnessCardOverlay) {
+        elements.mindfulnessCardOverlay.style.display = 'none';
+    }
+    
+    // Reset shuffled cards
+    shuffledCards = [];
+}
+
+// Setup mindfulness card drag functionality
+function setupMindfulnessCardDrag() {
+    let dragTarget = null;
+    
+    // Get the actual card element
+    const getCard = () => document.querySelector('.mindfulness-floating-card');
+    
+    // Mouse events
+    document.addEventListener('mousedown', (e) => {
+        const card = getCard();
+        if (!card) return;
+        
+        // Check if overlay is visible
+        const overlay = elements.mindfulnessCardOverlay;
+        if (!overlay || overlay.style.display !== 'flex') return;
+        
+        // Only start drag if clicking on the card
+        const cardRect = card.getBoundingClientRect();
+        if (e.clientX >= cardRect.left && e.clientX <= cardRect.right &&
+            e.clientY >= cardRect.top && e.clientY <= cardRect.bottom) {
+            isDraggingCard = true;
+            dragTarget = card;
+            
+            // Calculate offset from cursor to card top-left
+            cardDragOffset.x = e.clientX - cardRect.left;
+            cardDragOffset.y = e.clientY - cardRect.top;
+            
+            card.style.cursor = 'grabbing';
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDraggingCard || !dragTarget) return;
+        
+        // Calculate new position
+        let newX = e.clientX - cardDragOffset.x;
+        let newY = e.clientY - cardDragOffset.y;
+        
+        // Keep card within viewport bounds
+        const cardRect = dragTarget.getBoundingClientRect();
+        const maxX = window.innerWidth - cardRect.width;
+        const maxY = window.innerHeight - cardRect.height;
+        
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+        
+        // Apply position
+        dragTarget.style.position = 'fixed';
+        dragTarget.style.left = newX + 'px';
+        dragTarget.style.top = newY + 'px';
+        dragTarget.style.transform = 'none';
+        
+        // Save position
+        cardPosition.x = newX;
+        cardPosition.y = newY;
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if (isDraggingCard && dragTarget) {
+            dragTarget.style.cursor = 'grab';
+            dragTarget = null;
+            isDraggingCard = false;
+        }
+    });
+    
+    // Touch events for mobile
+    document.addEventListener('touchstart', (e) => {
+        const card = getCard();
+        if (!card) return;
+        
+        // Check if overlay is visible
+        const overlay = elements.mindfulnessCardOverlay;
+        if (!overlay || overlay.style.display !== 'flex') return;
+        
+        const touch = e.touches[0];
+        const cardRect = card.getBoundingClientRect();
+        
+        if (touch.clientX >= cardRect.left && touch.clientX <= cardRect.right &&
+            touch.clientY >= cardRect.top && touch.clientY <= cardRect.bottom) {
+            isDraggingCard = true;
+            dragTarget = card;
+            
+            cardDragOffset.x = touch.clientX - cardRect.left;
+            cardDragOffset.y = touch.clientY - cardRect.top;
+            
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (!isDraggingCard || !dragTarget) return;
+        
+        const touch = e.touches[0];
+        
+        let newX = touch.clientX - cardDragOffset.x;
+        let newY = touch.clientY - cardDragOffset.y;
+        
+        const cardRect = dragTarget.getBoundingClientRect();
+        const maxX = window.innerWidth - cardRect.width;
+        const maxY = window.innerHeight - cardRect.height;
+        
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+        
+        dragTarget.style.position = 'fixed';
+        dragTarget.style.left = newX + 'px';
+        dragTarget.style.top = newY + 'px';
+        dragTarget.style.transform = 'none';
+        
+        cardPosition.x = newX;
+        cardPosition.y = newY;
+        
+        e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener('touchend', () => {
+        if (isDraggingCard) {
+            dragTarget = null;
+            isDraggingCard = false;
+        }
+    });
+}
+
+// Setup reminder modal drag functionality
+function setupReminderModalDrag() {
+    const modal = elements.reminderModal;
+    if (!modal) return;
+    
+    // Get the actual modal content element
+    const getModalContent = () => elements.reminderModalContent || document.querySelector('.reminder-modal-content');
+    
+    // Mouse events
+    let dragTarget = null;
+    
+    document.addEventListener('mousedown', (e) => {
+        const modalContent = getModalContent();
+        if (!modalContent || modal.style.display !== 'flex') return;
+        
+        // Only start drag if clicking on the modal content (not buttons)
+        const modalRect = modalContent.getBoundingClientRect();
+        if (e.clientX >= modalRect.left && e.clientX <= modalRect.right &&
+            e.clientY >= modalRect.top && e.clientY <= modalRect.bottom) {
+            
+            // Don't drag if clicking on buttons or close button
+            if (e.target.closest('button')) {
+                return;
+            }
+            
+            isDraggingReminder = true;
+            dragTarget = modalContent;
+            
+            // Calculate offset from cursor to modal top-left
+            reminderDragOffset.x = e.clientX - modalRect.left;
+            reminderDragOffset.y = e.clientY - modalRect.top;
+            
+            modalContent.style.cursor = 'grabbing';
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDraggingReminder || !dragTarget) return;
+        
+        // Calculate new position
+        let newX = e.clientX - reminderDragOffset.x;
+        let newY = e.clientY - reminderDragOffset.y;
+        
+        // Keep modal within viewport bounds
+        const modalRect = dragTarget.getBoundingClientRect();
+        const maxX = window.innerWidth - modalRect.width;
+        const maxY = window.innerHeight - modalRect.height;
+        
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+        
+        // Apply position
+        dragTarget.style.position = 'fixed';
+        dragTarget.style.left = newX + 'px';
+        dragTarget.style.top = newY + 'px';
+        dragTarget.style.transform = 'none';
+        
+        // Save position
+        reminderPosition.x = newX;
+        reminderPosition.y = newY;
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if (isDraggingReminder && dragTarget) {
+            dragTarget.style.cursor = 'grab';
+            dragTarget = null;
+            isDraggingReminder = false;
+        }
+    });
+    
+    // Touch events for mobile
+    document.addEventListener('touchstart', (e) => {
+        const modalContent = getModalContent();
+        if (!modalContent || modal.style.display !== 'flex') return;
+        
+        const touch = e.touches[0];
+        const modalRect = modalContent.getBoundingClientRect();
+        
+        if (touch.clientX >= modalRect.left && touch.clientX <= modalRect.right &&
+            touch.clientY >= modalRect.top && touch.clientY <= modalRect.bottom) {
+            
+            // Don't drag if touching buttons
+            if (e.target.closest('button')) {
+                return;
+            }
+            
+            isDraggingReminder = true;
+            dragTarget = modalContent;
+            
+            reminderDragOffset.x = touch.clientX - modalRect.left;
+            reminderDragOffset.y = touch.clientY - modalRect.top;
+            
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (!isDraggingReminder || !dragTarget) return;
+        
+        const touch = e.touches[0];
+        
+        let newX = touch.clientX - reminderDragOffset.x;
+        let newY = touch.clientY - reminderDragOffset.y;
+        
+        const modalRect = dragTarget.getBoundingClientRect();
+        const maxX = window.innerWidth - modalRect.width;
+        const maxY = window.innerHeight - modalRect.height;
+        
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+        
+        dragTarget.style.position = 'fixed';
+        dragTarget.style.left = newX + 'px';
+        dragTarget.style.top = newY + 'px';
+        dragTarget.style.transform = 'none';
+        
+        reminderPosition.x = newX;
+        reminderPosition.y = newY;
+        
+        e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener('touchend', () => {
+        if (isDraggingReminder) {
+            dragTarget = null;
+            isDraggingReminder = false;
+        }
+    });
+}
+
 // Notification helpers
 async function requestNotificationPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -276,6 +687,7 @@ const elements = {
     
     // Reminder Modal
     reminderModal: document.getElementById('reminderModal'),
+    reminderModalContent: document.querySelector('.reminder-modal-content'),
     reminderModalText: document.getElementById('reminderModalText'),
     reminderQueueInfo: document.getElementById('reminderQueueInfo'),
     closeReminderModal: document.getElementById('closeReminderModal'),
@@ -285,7 +697,13 @@ const elements = {
     // Stop Timer Confirmation Modal
     stopTimerModal: document.getElementById('stopTimerModal'),
     cancelStopTimer: document.getElementById('cancelStopTimer'),
-    confirmStopTimer: document.getElementById('confirmStopTimer')
+    confirmStopTimer: document.getElementById('confirmStopTimer'),
+    
+    // Mindfulness Card Overlay
+    mindfulnessCardOverlay: document.getElementById('mindfulnessCardOverlay'),
+    mindfulnessCardIcon: document.getElementById('mindfulnessCardIcon'),
+    mindfulnessCardTitle: document.getElementById('mindfulnessCardTitle'),
+    mindfulnessCardText: document.getElementById('mindfulnessCardText')
 };
 
 // Initialize
@@ -348,6 +766,11 @@ function loadStateFromStorage() {
                     
                     // Resume media session
                     startMediaSession();
+                    
+                    // Resume mindfulness cards if on break with eye exercises
+                    if (state.isBreak && state.eyeExercises) {
+                        startMindfulnessCards();
+                    }
                     
                     // Notify user
                     showNotification('Timer Resumed', `Continuing your ${state.isBreak ? 'break' : 'focus'} session`);
@@ -619,17 +1042,42 @@ function setupEventListeners() {
         }
     });
     
-    // ESC key to close modal
+    // ESC key to close modal and handle mindfulness cards
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
+            // Windows + Ctrl + ESC: Re-enable mindfulness cards
+            if (e.ctrlKey && e.metaKey) {
+                e.preventDefault();
+                if (mindfulnessTemporarilyDisabled) {
+                    mindfulnessTemporarilyDisabled = false;
+                    // Restart cards if currently in break
+                    if (state.isBreak && state.eyeExercises && state.isTimerRunning && !state.isPaused) {
+                        startMindfulnessCards();
+                    }
+                    showNotification('Mindfulness Cards Enabled', 'Eye exercise cards will show during breaks');
+                }
+                return;
+            }
+            
+            // ESC alone: Handle modals and disable mindfulness cards
             if (elements.reminderModal.style.display === 'flex') {
                 dismissCurrentReminder();
-            }
-            if (elements.stopTimerModal.classList.contains('show')) {
+            } else if (elements.stopTimerModal.classList.contains('show')) {
                 closeStopTimerModal();
+            } else if (elements.mindfulnessCardOverlay.style.display === 'flex') {
+                // Hide mindfulness cards and disable for this focus session
+                mindfulnessTemporarilyDisabled = true;
+                stopMindfulnessCards();
+                showNotification('Mindfulness Cards Hidden', 'Press Windows+Ctrl+ESC to show them again');
             }
         }
     });
+    
+    // Mindfulness card drag functionality
+    setupMindfulnessCardDrag();
+    
+    // Reminder modal drag functionality
+    setupReminderModalDrag();
     
     // Stop Timer Confirmation Modal
     elements.cancelStopTimer.addEventListener('click', closeStopTimerModal);
@@ -688,6 +1136,9 @@ function startTimer() {
     state.timeRemaining = state.focusPeriod * 60;
     state.timerStartTime = Date.now();  // Track start time
     state.pausedTime = 0;               // Reset paused time
+    
+    // Reset mindfulness card temporary disable for new focus session
+    mindfulnessTemporarilyDisabled = false;
     
     // Request wake lock to prevent screen from sleeping on mobile
     requestWakeLock();
@@ -751,7 +1202,10 @@ function updateTimer() {
 // Handle session complete
 function handleSessionComplete() {
     if (state.isBreak) {
-        // Break finished, start next focus session
+        // Break finished, stop mindfulness cards
+        stopMindfulnessCards();
+        
+        // Start next focus session
         state.currentSession++;
         
         if (state.currentSession > state.totalSessions) {
@@ -800,6 +1254,9 @@ function handleSessionComplete() {
         
         // Update media session
         updateMediaSession();
+        
+        // Start mindfulness cards if eye exercises enabled
+        startMindfulnessCards();
     }
     
     updateTimerDisplay();
@@ -814,6 +1271,9 @@ function completeTimer() {
     
     // Stop media session
     stopMediaSession();
+    
+    // Stop mindfulness cards
+    stopMindfulnessCards();
     
     // Play completion tone
     playTone(523.25, 150);
@@ -921,6 +1381,11 @@ function togglePause() {
         // Just paused - record when pause started
         state.pauseStartTime = Date.now();
         
+        // Hide mindfulness cards when paused
+        if (state.isBreak && state.eyeExercises) {
+            stopMindfulnessCards();
+        }
+        
         elements.pauseButton.innerHTML = `
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
@@ -933,6 +1398,11 @@ function togglePause() {
             const pauseDuration = Date.now() - state.pauseStartTime;
             state.pausedTime += pauseDuration;
             state.pauseStartTime = null;
+        }
+        
+        // Restart mindfulness cards if resuming during a break
+        if (state.isBreak && state.eyeExercises) {
+            startMindfulnessCards();
         }
         
         elements.pauseButton.innerHTML = `
@@ -987,6 +1457,12 @@ function resetTimer() {
     
     // Stop media session
     stopMediaSession();
+    
+    // Stop mindfulness cards
+    stopMindfulnessCards();
+    
+    // Reset mindfulness temporary disable
+    mindfulnessTemporarilyDisabled = false;
     
     document.title = 'PagePause - Eye Wellness Timer for Readers';
     
@@ -1190,6 +1666,15 @@ function showReminderModal(reminder) {
     elements.reminderModalText.textContent = reminder.text;
     elements.reminderModal.style.display = 'flex';
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    
+    // Apply saved position if available
+    const modalContent = elements.reminderModalContent;
+    if (reminderPosition.x !== null && reminderPosition.y !== null && modalContent) {
+        modalContent.style.position = 'fixed';
+        modalContent.style.left = reminderPosition.x + 'px';
+        modalContent.style.top = reminderPosition.y + 'px';
+        modalContent.style.transform = 'none';
+    }
     
     // Update queue info
     updateQueueInfo();

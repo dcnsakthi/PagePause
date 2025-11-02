@@ -1335,27 +1335,37 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999;
     animation: fadeIn 0.3s ease-out;
     padding: 20px;
+    pointer-events: none;
 }
 
 .reminder-modal-content {
-    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-light) 100%);
+    background: rgba(26, 77, 62, 0.95);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     border-radius: 24px;
     padding: 40px;
     max-width: 500px;
     width: 100%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(101, 217, 178, 0.3);
     position: relative;
     animation: slideUp 0.3s ease-out;
     text-align: center;
+    cursor: grab;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: auto;
+}
+
+.reminder-modal-content:active {
+    cursor: grabbing;
 }
 
 @keyframes slideUp {
@@ -1909,6 +1919,84 @@ body {
         font-size: 13px;
         padding: 10px 16px;
     }
+}
+
+/* Mindfulness Card Overlay */
+.mindfulness-card-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.mindfulness-floating-card {
+    background: rgba(26, 77, 62, 0.85);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(101, 217, 178, 0.3);
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: floatIn 0.5s ease-out;
+    transform-origin: center;
+    cursor: grab;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: auto;
+}
+
+.mindfulness-floating-card:active {
+    cursor: grabbing;
+}
+
+@keyframes floatIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.mindfulness-card-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.mindfulness-card-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin-bottom: 16px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.mindfulness-card-text {
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Accessibility */
