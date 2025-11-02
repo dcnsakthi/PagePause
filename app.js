@@ -48,6 +48,9 @@ let wakeLock = null;
 let audioContext;
 let hasInteracted = false;
 
+// Media Session for lock screen display
+let mediaSessionUpdateInterval = null;
+
 // Initialize audio context on first user interaction
 function initAudio() {
     if (!hasInteracted) {
@@ -111,6 +114,102 @@ async function releaseWakeLock() {
         } catch (err) {
             console.log('Wake Lock release error:', err);
         }
+    }
+}
+
+// Media Session API - Display timer on lock screen
+function updateMediaSession() {
+    if (!('mediaSession' in navigator)) {
+        console.log('Media Session API not supported');
+        return;
+    }
+    
+    try {
+        const minutes = Math.floor(state.timeRemaining / 60);
+        const seconds = state.timeRemaining % 60;
+        const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        const sessionType = state.isBreak ? 'Break Time' : 'Focus Session';
+        const sessionNumber = state.isBreak 
+            ? `Break ${state.currentSession} of ${state.totalSessions - 1}`
+            : `Session ${state.currentSession} of ${state.totalSessions}`;
+        
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: `${timeString} - ${sessionType}`,
+            artist: 'PagePause Timer',
+            album: sessionNumber,
+            artwork: [
+                { src: 'icons/icon-96.png', sizes: '96x96', type: 'image/png' },
+                { src: 'icons/icon-128.png', sizes: '128x128', type: 'image/png' },
+                { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+                { src: 'icons/icon-384.png', sizes: '384x384', type: 'image/png' },
+                { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }
+            ]
+        });
+        
+        // Set up action handlers for lock screen controls
+        navigator.mediaSession.setActionHandler('play', () => {
+            if (state.isPaused) {
+                togglePause();
+            }
+        });
+        
+        navigator.mediaSession.setActionHandler('pause', () => {
+            if (!state.isPaused) {
+                togglePause();
+            }
+        });
+        
+        navigator.mediaSession.setActionHandler('stop', () => {
+            showStopTimerModal();
+        });
+        
+        // Update playback state
+        navigator.mediaSession.playbackState = state.isPaused ? 'paused' : 'playing';
+        
+    } catch (err) {
+        console.log('Media Session update error:', err);
+    }
+}
+
+function startMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    
+    // Update immediately
+    updateMediaSession();
+    
+    // Update every second to keep lock screen timer current
+    if (mediaSessionUpdateInterval) {
+        clearInterval(mediaSessionUpdateInterval);
+    }
+    
+    mediaSessionUpdateInterval = setInterval(() => {
+        if (state.isTimerRunning && !state.isPaused) {
+            updateMediaSession();
+        }
+    }, 1000);
+}
+
+function stopMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    
+    try {
+        // Clear metadata
+        navigator.mediaSession.metadata = null;
+        
+        // Clear action handlers
+        navigator.mediaSession.setActionHandler('play', null);
+        navigator.mediaSession.setActionHandler('pause', null);
+        navigator.mediaSession.setActionHandler('stop', null);
+        
+        // Clear update interval
+        if (mediaSessionUpdateInterval) {
+            clearInterval(mediaSessionUpdateInterval);
+            mediaSessionUpdateInterval = null;
+        }
+        
+    } catch (err) {
+        console.log('Media Session stop error:', err);
     }
 }
 
@@ -243,6 +342,12 @@ function loadStateFromStorage() {
                     
                     // Resume countdown
                     state.timerInterval = setInterval(updateTimer, 1000);
+                    
+                    // Resume wake lock
+                    requestWakeLock();
+                    
+                    // Resume media session
+                    startMediaSession();
                     
                     // Notify user
                     showNotification('Timer Resumed', `Continuing your ${state.isBreak ? 'break' : 'focus'} session`);
@@ -587,6 +692,9 @@ function startTimer() {
     // Request wake lock to prevent screen from sleeping on mobile
     requestWakeLock();
     
+    // Start media session for lock screen display
+    startMediaSession();
+    
     // Hide setup, show active timer
     document.querySelector('.timer-section').style.display = 'none';
     elements.activeTimer.classList.remove('hidden');
@@ -664,6 +772,9 @@ function handleSessionComplete() {
         
         showNotification('Focus Session', `Session ${state.currentSession} of ${state.totalSessions} - Let's focus! 📖`);
         
+        // Update media session
+        updateMediaSession();
+        
     } else {
         // Focus session finished
         if (state.skipBreaks || state.currentSession >= state.totalSessions) {
@@ -686,6 +797,9 @@ function handleSessionComplete() {
         
         const exerciseReminder = state.eyeExercises ? ' Remember to do your eye exercises! 👁️' : '';
         showNotification('Break Time!', `Take a ${state.breakPeriod}-minute break.${exerciseReminder}`);
+        
+        // Update media session
+        updateMediaSession();
     }
     
     updateTimerDisplay();
@@ -697,6 +811,9 @@ function completeTimer() {
     
     // Release wake lock
     releaseWakeLock();
+    
+    // Stop media session
+    stopMediaSession();
     
     // Play completion tone
     playTone(523.25, 150);
@@ -827,6 +944,9 @@ function togglePause() {
         `;
     }
     
+    // Update media session state
+    updateMediaSession();
+    
     // Save state when pausing/resuming
     saveStateToStorage();
 }
@@ -864,6 +984,9 @@ function resetTimer() {
     
     // Release wake lock when timer is reset
     releaseWakeLock();
+    
+    // Stop media session
+    stopMediaSession();
     
     document.title = 'PagePause - Eye Wellness Timer for Readers';
     
