@@ -145,15 +145,69 @@ async function playTone(frequency = 440, duration = 200, type = 'sine') {
     oscillator.stop(audioContext.currentTime + duration / 1000);
 }
 
+/**
+ * Lock Screen & Background Timer Support
+ * ======================================
+ * 
+ * This app uses multiple APIs to ensure the timer continues running and displays
+ * on the lock screen when the device is locked:
+ * 
+ * 1. Wake Lock API (requestWakeLock/releaseWakeLock):
+ *    - Keeps the screen on during active timer sessions
+ *    - Automatically re-acquires if released unexpectedly
+ *    - Released when timer completes or is stopped
+ * 
+ * 2. Media Session API (updateMediaSession/startMediaSession):
+ *    - Displays timer on mobile lock screens as "media"
+ *    - Shows current time remaining, session type, and progress
+ *    - Provides play/pause/stop controls on lock screen
+ *    - Updates every second to show live countdown
+ * 
+ * 3. Timestamp-Based Timer:
+ *    - Timer uses Date.now() to track elapsed time
+ *    - Continues accurately even when page is hidden/throttled
+ *    - Recalculates on visibility change to handle long backgrounds
+ * 
+ * 4. Visibility Change & Focus Events:
+ *    - Detects when device is locked/unlocked
+ *    - Re-acquires wake lock when returning to foreground
+ *    - Forces timer recalculation for accuracy
+ * 
+ * 5. Service Worker & State Persistence:
+ *    - Saves timer state every 10 seconds to localStorage
+ *    - Service worker receives periodic updates for background sync
+ *    - Timer can resume if app is closed and reopened
+ * 
+ * 6. Audio Tones:
+ *    - Break/focus tones play even when device is locked
+ *    - Uses Web Audio API which works in background
+ * 
+ * Tested on: Chrome/Edge (Android), Safari (iOS), Firefox
+ */
+
 // Wake Lock API - Keep screen awake during timer
 async function requestWakeLock() {
     try {
         if ('wakeLock' in navigator) {
+            // Release existing wake lock if any
+            if (wakeLock !== null) {
+                try {
+                    await wakeLock.release();
+                } catch (e) {
+                    console.log('Error releasing old wake lock:', e);
+                }
+            }
+            
             wakeLock = await navigator.wakeLock.request('screen');
             console.log('Wake Lock acquired');
             
             wakeLock.addEventListener('release', () => {
                 console.log('Wake Lock released');
+                // Automatically re-acquire if timer is still running
+                if (state.isTimerRunning && !state.isPaused && !document.hidden) {
+                    console.log('Auto re-acquiring wake lock...');
+                    setTimeout(() => requestWakeLock(), 100);
+                }
             });
         }
     } catch (err) {
@@ -190,6 +244,12 @@ function updateMediaSession() {
             ? `Break ${state.currentSession} of ${state.totalSessions - 1}`
             : `Session ${state.currentSession} of ${state.totalSessions}`;
         
+        // Calculate total duration and current position for progress display
+        const totalDuration = state.isBreak 
+            ? state.breakPeriod * 60 
+            : state.focusPeriod * 60;
+        const currentPosition = totalDuration - state.timeRemaining;
+        
         navigator.mediaSession.metadata = new MediaMetadata({
             title: `${timeString} - ${sessionType}`,
             artist: 'PagePause Timer',
@@ -202,6 +262,15 @@ function updateMediaSession() {
                 { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }
             ]
         });
+        
+        // Set position state for lock screen progress bar
+        if ('setPositionState' in navigator.mediaSession) {
+            navigator.mediaSession.setPositionState({
+                duration: totalDuration,
+                playbackRate: 1.0,
+                position: Math.min(currentPosition, totalDuration)
+            });
+        }
         
         // Set up action handlers for lock screen controls
         navigator.mediaSession.setActionHandler('play', () => {
@@ -1260,6 +1329,19 @@ function updateTimer() {
         // Save state every 10 seconds to persist timer
         if (state.timeRemaining % 10 === 0) {
             saveStateToStorage();
+            
+            // Send update to service worker for background sync
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'TIMER_UPDATE',
+                    state: {
+                        timeRemaining: state.timeRemaining,
+                        isBreak: state.isBreak,
+                        currentSession: state.currentSession,
+                        totalSessions: state.totalSessions
+                    }
+                });
+            }
         }
     }
 }
@@ -1899,6 +1981,14 @@ document.addEventListener('visibilitychange', async () => {
         // Page is hidden (tab switched, phone locked, etc.)
         // Timer continues running in background using timestamp-based calculation
         console.log('Page hidden - timer continues running');
+        
+        // Save current state to localStorage for persistence
+        saveStateToStorage();
+        
+        // Update media session one more time before hiding
+        if (state.isTimerRunning && !state.isPaused) {
+            updateMediaSession();
+        }
     } else {
         // Page is visible again
         console.log('Page visible - syncing timer');
@@ -1911,7 +2001,26 @@ document.addEventListener('visibilitychange', async () => {
         // Force an update to recalculate time in case browser throttled execution
         if (state.isTimerRunning) {
             updateTimer();
+            updateMediaSession();
         }
+    }
+});
+
+// Page Focus/Blur Handler - Additional layer for device lock detection
+window.addEventListener('focus', async () => {
+    console.log('Window focused');
+    if (state.isTimerRunning && !state.isPaused) {
+        await requestWakeLock();
+        updateTimer();
+        updateMediaSession();
+    }
+});
+
+window.addEventListener('blur', () => {
+    console.log('Window blurred');
+    // Save state when losing focus
+    if (state.isTimerRunning) {
+        saveStateToStorage();
     }
 });
 

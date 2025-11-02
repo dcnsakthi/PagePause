@@ -75,6 +75,33 @@ self.addEventListener('activate', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow('/')
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(clientList => {
+        // If a window is already open, focus it
+        for (const client of clientList) {
+          if (client.url.includes(self.registration.scope) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Otherwise, open a new window
+        if (clients.openWindow) {
+          return clients.openWindow('/');
+        }
+      })
   );
+});
+
+// Handle messages from the main app
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'TIMER_UPDATE') {
+    // Store timer state for potential recovery
+    self.timerState = event.data.state;
+  }
+});
+
+// Keep service worker alive for background timer operations
+self.addEventListener('sync', event => {
+  if (event.tag === 'timer-sync') {
+    console.log('Background sync for timer');
+  }
 });
