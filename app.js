@@ -1373,8 +1373,9 @@ function handleSessionComplete() {
         
         showNotification('Focus Session', `Session ${state.currentSession} of ${state.totalSessions} - Let's focus! 📖`);
         
-        // Update media session
-        updateMediaSession();
+        // Ensure wake lock and media session are maintained for next session
+        requestWakeLock();
+        startMediaSession();
         
     } else {
         // Focus session finished
@@ -1399,8 +1400,9 @@ function handleSessionComplete() {
         const exerciseReminder = state.eyeExercises ? ' Remember to do your eye exercises! 👁️' : '';
         showNotification('Break Time!', `Take a ${state.breakPeriod}-minute break.${exerciseReminder}`);
         
-        // Update media session
-        updateMediaSession();
+        // Ensure wake lock and media session are maintained for break session
+        requestWakeLock();
+        startMediaSession();
         
         // Reset mindfulness temporary disable flag for new break
         mindfulnessTemporarilyDisabled = false;
@@ -1536,6 +1538,9 @@ function togglePause() {
             stopMindfulnessCards();
         }
         
+        // Stop media session updates while paused
+        stopMediaSession();
+        
         elements.pauseButton.innerHTML = `
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
@@ -1555,6 +1560,12 @@ function togglePause() {
             startMindfulnessCards();
         }
         
+        // Restart media session for lock screen display
+        startMediaSession();
+        
+        // Re-acquire wake lock when resuming
+        requestWakeLock();
+        
         elements.pauseButton.innerHTML = `
             <svg viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="4" width="4" height="16"/>
@@ -1563,9 +1574,6 @@ function togglePause() {
             Pause
         `;
     }
-    
-    // Update media session state
-    updateMediaSession();
     
     // Save state when pausing/resuming
     saveStateToStorage();
