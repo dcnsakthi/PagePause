@@ -24,6 +24,8 @@ python -m http.server 8000
 ✅ **Quick Reminders** - Custom reminders with popup modal & snooze  
 ✅ **Task Tracker** - Manage reading list  
 ✅ **Eye Exercises** - 6 guided wellness exercises  
+✅ **Lock Screen Support** - Timer displays on mobile lock screen  
+✅ **Triple-Tap Hide** - Hide mindfulness cards with 3 quick taps  
 ✅ **PWA Ready** - Install on mobile & desktop  
 ✅ **Offline Support** - Works without internet  
 ✅ **Zero Dependencies** - Pure vanilla JS  
@@ -111,6 +113,15 @@ Navigate to: **http://localhost:8000**
 - 20-20-20 rule
 - Blink, palm press, eye rolls
 - Near/far focus, figure eight
+- **Drag cards** to reposition on screen
+- **Triple-tap** (3 quick taps) to hide cards
+
+### 📱 Lock Screen Timer
+- Timer continues when device is locked
+- Live countdown on lock screen
+- Play/Pause/Stop controls from lock screen
+- Audio tones play during device lock
+- Automatic state saving and recovery
 
 ## 📱 Install as App
 
@@ -193,6 +204,12 @@ const state = {
 - Check if modal popup is blocked
 - Ensure JavaScript is enabled
 
+**Lock screen not showing timer?**
+- Works best in Chrome/Edge (Android) and Safari (iOS 16.4+)
+- Ensure timer is actively running (not paused)
+- Try locking/unlocking device once to activate
+- Check that app is installed as PWA for best results
+
 ## 💎 Pro Tips
 
 ✅ **Use 20-20-20 rule**: Every 20 mins, look 20 feet away for 20 seconds  
@@ -202,6 +219,9 @@ const state = {
 ✅ **Mobile workflow**: Install as PWA for home screen access  
 ✅ **Keyboard shortcuts**: ESC closes reminder popup  
 ✅ **Break compliance**: Don't skip breaks - your eyes need rest!  
+✅ **Triple-tap hide**: On mobile, tap mindfulness cards 3 times to hide  
+✅ **Lock screen control**: Control timer from lock screen on mobile  
+✅ **Drag cards**: Reposition mindfulness cards anywhere on screen  
 
 ## 📖 Usage Examples
 

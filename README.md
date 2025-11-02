@@ -11,16 +11,24 @@ PagePause is a sophisticated Progressive Web App (PWA) designed to protect your 
 ## ✨ Features
 
 ### 🎯 Core Functionality
-- **Editable Focus Timer**: Click and edit reading time from 5 to 240 minutes
+- **Editable Focus Timer**: Click and edit reading time from 15 to 240 minutes
 - **Smart Break System**: Automatic break reminders based on configurable intervals
 - **Quick Reminders with Popup**: Set custom reminders while reading with beautiful modal notifications
   - Custom time intervals (1-999 minutes)
-  - Quick presets: 5, 7, 10, 15, 30 minutes
   - Live countdown display
   - **Snooze functionality** - Snooze reminders for 5 more minutes
   - **Popup modal** with sound alerts and dismiss options
   - Press **ESC** or click close button to dismiss
 - **Eye Wellness Exercises**: Guided exercises including the 20-20-20 rule, blink exercises, and more
+  - **Triple-tap to hide** - Quickly hide mindfulness cards on mobile with 3 quick taps
+  - Cards reappear in next break session
+  - Draggable cards for custom positioning
+- **Lock Screen Support**: Timer continues running and displays on mobile lock screen
+  - Live countdown on lock screen
+  - Play/Pause/Stop controls from lock screen
+  - Works even when device is locked
+  - Audio tones play during device lock
+  - Automatic wake lock prevents screen sleep
 - **Task Management**: Track what you're reading during focus sessions
 - **Sound Cues**: Optional audio notifications for session starts and breaks
 - **Browser Notifications**: Desktop and mobile notifications even when the tab is inactive
@@ -153,13 +161,17 @@ git push -u origin main
 - **Pause/Resume**: Take unexpected breaks without losing progress
 - **Stop**: End the session early if needed
 - View session count: "Session X of Y"
+- **Lock screen support**: Timer displays on mobile lock screen with controls
+- **Background operation**: Timer continues even when device is locked or app is in background
 
 ### Break Time
 
 - Automatic transition to break mode
-- Optional guided eye exercises
+- Optional guided eye exercises with draggable cards
+- **Triple-tap to hide cards** on mobile (3 quick taps anywhere on card)
 - Notifications remind you to rest
 - Resumes focus automatically after break ends
+- **Works on lock screen**: Timer continues and displays even when device is locked
 
 ### Managing Reading Tasks
 
@@ -177,6 +189,44 @@ Switch to the **Mindfulness break** tab to view:
 - Palm press technique
 - Near & far focus
 - Figure eight tracing
+
+**Mobile Features:**
+- **Drag cards** to reposition them anywhere on screen
+- **Triple-tap** (3 quick taps) to hide cards temporarily
+- Cards automatically reappear in next break session
+
+### 📱 Lock Screen Timer Support
+
+PagePause continues running even when your device is locked:
+
+**Features:**
+- ⏰ **Live countdown** displays on mobile lock screen
+- 🎮 **Lock screen controls**: Play/Pause/Stop buttons
+- 🔒 **Wake Lock**: Keeps screen on during active sessions
+- 🔊 **Audio alerts**: Tones play even when locked
+- 💾 **Auto-save**: State persists across lock/unlock
+- 🔄 **Accurate timing**: Uses timestamp-based calculation
+
+**How it works:**
+1. Start a timer session
+2. Lock your device (press power button)
+3. Timer displays on lock screen with live countdown
+4. Hear audio tones when focus/break sessions start
+5. Control timer from lock screen (pause/play/stop)
+6. Unlock anytime - timer stays accurate
+
+**Supported Browsers:**
+- ✅ Chrome/Edge (Android) - Full support
+- ✅ Safari (iOS 16.4+) - Full support
+- ⚠️ Firefox (Android) - Timer continues, limited lock screen display
+
+## 🚀 Deployment
+
+### Quick Deploy with GitHub Actions
+
+Create `.github/workflows/deploy.yml`:
+
+```yaml
 name: Deploy to GitHub Pages
 
 on:
